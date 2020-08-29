@@ -33,8 +33,7 @@ export class Lox {
         const tokens = scanner.scanTokens()
 
         tokens.forEach(token => {
-            const a = new Token(TokenType.BANG, '!', {}, 1)
-            console.log(a)
+            console.log(token)
         })
     }
 
