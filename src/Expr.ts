@@ -1,22 +1,13 @@
 import { Token } from "./Token"
 
-interface ExprVisitor<T> {
+export interface ExprVisitor<T> {
     visitUnaryExpr(expr: UnaryExpr): T
+    visitBinaryExpr(expr: BinaryExpr): T
+    visitGroupingExpr(expr: GroupingExpr): T
+    visitLiteralExpr(expr: LiteralExpr): T
 }
 
-class Logger implements ExprVisitor<string> {
-    visitUnaryExpr(expr: UnaryExpr) {
-        return 'asd'
-    }
-    print(expr: Expr) {
-        return expr.accept(this)
-    }
-}
-
-const a = new Logger()
-
-
-abstract class Expr {
+export abstract class Expr {
     abstract accept<T>(visitor: ExprVisitor<T>): T
 }
 
@@ -34,19 +25,25 @@ export class BinaryExpr extends Expr {
     constructor(public left: Expr, public operator: Token, public right: Expr) {
         super()
     }
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitBinaryExpr(this)
+    }
 }
 
 export class GroupingExpr extends Expr {
     constructor(public expression: Expr) {
         super()
     }
-}
-
-export class LiteralExpr extends Expr {
-    constructor(public value: object) {
-        super()
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitGroupingExpr(this)
     }
 }
 
-const u = new UnaryExpr(new Token('IDENTIFIER', '', 1, 5), new LiteralExpr({}))
-u.accept(a)
+export class LiteralExpr extends Expr {
+    constructor(public value: boolean | number | string | null) {
+        super()
+    }
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitLiteralExpr(this)
+    }
+}

@@ -3,6 +3,7 @@ import readline from 'readline'
 import fs from 'fs'
 import { TokenType } from "./TokenType"
 import { Token } from "./Token"
+import { Parser } from "./Parser"
 
 export class Lox {
     static hadError = false
@@ -31,10 +32,15 @@ export class Lox {
     private static run(source: string) {
         const scanner = new Scanner(source)
         const tokens = scanner.scanTokens()
+        const parser = new Parser(tokens)
+        const expr = parser.parse()
 
-        tokens.forEach(token => {
-            console.log(token)
-        })
+        if (this.hadError) {
+            return
+        }
+
+        console.log(expr)
+
     }
 
     static error(line: number, message: string) {

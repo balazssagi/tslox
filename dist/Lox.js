@@ -7,6 +7,7 @@ exports.Lox = void 0;
 var Scanner_1 = require("./Scanner");
 var readline_1 = __importDefault(require("readline"));
 var fs_1 = __importDefault(require("fs"));
+var Parser_1 = require("./Parser");
 var Lox = /** @class */ (function () {
     function Lox() {
     }
@@ -31,9 +32,12 @@ var Lox = /** @class */ (function () {
     Lox.run = function (source) {
         var scanner = new Scanner_1.Scanner(source);
         var tokens = scanner.scanTokens();
-        tokens.forEach(function (token) {
-            console.log(token);
-        });
+        var parser = new Parser_1.Parser(tokens);
+        var expr = parser.parse();
+        if (this.hadError) {
+            return;
+        }
+        console.log(expr);
     };
     Lox.error = function (line, message) {
         Lox.report(line, '', message);

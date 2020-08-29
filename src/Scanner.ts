@@ -3,11 +3,11 @@ import { Token } from "./Token"
 import { TokenType } from "./TokenType"
 
 export class Scanner {
-    source
-    tokens: Token[] = []
-    start = 0
-    current = 0
-    line = 1
+    private source
+    private tokens: Token[] = []
+    private start = 0
+    private current = 0
+    private line = 1
 
     constructor(source: string) {
         this.source = source
