@@ -25,6 +25,9 @@ export class Interpreter implements ExprVisitor<Value> {
             case 'SLASH':
                 this.checkNumberOperand(expr.operator, left)
                 this.checkNumberOperand(expr.operator, right)
+                if (right === 0) {
+                    throw new RuntimeError(expr.operator, 'Division by zero is not allowed.')
+                }
                 return left / right
             case 'STAR':
                 this.checkNumberOperand(expr.operator, left)
@@ -60,6 +63,7 @@ export class Interpreter implements ExprVisitor<Value> {
                 return this.isEqual(left, right)
         }
 
+        // ???
         throw new Error()
     }
 

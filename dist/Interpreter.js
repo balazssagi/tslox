@@ -35,6 +35,9 @@ var Interpreter = /** @class */ (function () {
             case 'SLASH':
                 this.checkNumberOperand(expr.operator, left);
                 this.checkNumberOperand(expr.operator, right);
+                if (right === 0) {
+                    throw new RuntimeError(expr.operator, 'Division by zero is not allowed.');
+                }
                 return left / right;
             case 'STAR':
                 this.checkNumberOperand(expr.operator, left);
@@ -69,6 +72,7 @@ var Interpreter = /** @class */ (function () {
             case 'EQUAL_EQUAL':
                 return this.isEqual(left, right);
         }
+        // ???
         throw new Error();
     };
     Interpreter.prototype.visitUnaryExpr = function (expr) {
