@@ -4,9 +4,12 @@ import fs from 'fs'
 import { TokenType } from "./TokenType"
 import { Token } from "./Token"
 import { Parser } from "./Parser"
+import { Interpreter, RuntimeError } from "./Interpreter"
 
 export class Lox {
     static hadError = false
+    static hadRuntimeError = false
+    static interpreter = new Interpreter()
 
     static runFile(path: string) {
         const source = fs.readFileSync(path, 'utf-8')
@@ -14,6 +17,9 @@ export class Lox {
 
         if (Lox.hadError) {
             process.exit(65)
+        }
+        if (Lox.hadRuntimeError) {
+            process.exit(70)
         }
     }
 
@@ -35,12 +41,16 @@ export class Lox {
         const parser = new Parser(tokens)
         const expr = parser.parse()
 
-        if (this.hadError) {
+        if (this.hadError || !expr) {
             return
         }
 
-        console.log(expr)
+        this.interpreter.interpret(expr)
+    }
 
+    static runtimeError(error: RuntimeError) {
+        console.error(`[line ${error.token.line}] Runtime error: ${error.message}`)
+        this.hadRuntimeError = true
     }
 
     static error(line: number, message: string) {

@@ -34,7 +34,7 @@ var Parser = /** @class */ (function () {
     };
     Parser.prototype.equality = function () {
         var expr = this.comparison();
-        while (this.match('BANG', 'BANG_EQUAL')) {
+        while (this.match('BANG_EQUAL', 'EQUAL_EQUAL')) {
             var operator = this.previous();
             var right = this.comparison();
             expr = new Expr_1.BinaryExpr(expr, operator, right);

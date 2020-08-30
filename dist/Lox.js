@@ -8,6 +8,7 @@ var Scanner_1 = require("./Scanner");
 var readline_1 = __importDefault(require("readline"));
 var fs_1 = __importDefault(require("fs"));
 var Parser_1 = require("./Parser");
+var Interpreter_1 = require("./Interpreter");
 var Lox = /** @class */ (function () {
     function Lox() {
     }
@@ -16,6 +17,9 @@ var Lox = /** @class */ (function () {
         Lox.run(source);
         if (Lox.hadError) {
             process.exit(65);
+        }
+        if (Lox.hadRuntimeError) {
+            process.exit(70);
         }
     };
     Lox.runPrompt = function () {
@@ -34,10 +38,14 @@ var Lox = /** @class */ (function () {
         var tokens = scanner.scanTokens();
         var parser = new Parser_1.Parser(tokens);
         var expr = parser.parse();
-        if (this.hadError) {
+        if (this.hadError || !expr) {
             return;
         }
-        console.log(expr);
+        this.interpreter.interpret(expr);
+    };
+    Lox.runtimeError = function (error) {
+        console.error("[line " + error.token.line + "] Runtime error: " + error.message);
+        this.hadRuntimeError = true;
     };
     Lox.error = function (line, message) {
         Lox.report(line, '', message);
@@ -47,6 +55,8 @@ var Lox = /** @class */ (function () {
         Lox.hadError = true;
     };
     Lox.hadError = false;
+    Lox.hadRuntimeError = false;
+    Lox.interpreter = new Interpreter_1.Interpreter();
     return Lox;
 }());
 exports.Lox = Lox;
