@@ -13,7 +13,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.UnaryExpr = exports.Expr = void 0;
+exports.AssignExpr = exports.VariableExpr = exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.UnaryExpr = exports.Expr = void 0;
 var Expr = /** @class */ (function () {
     function Expr() {
     }
@@ -75,3 +75,30 @@ var LiteralExpr = /** @class */ (function (_super) {
     return LiteralExpr;
 }(Expr));
 exports.LiteralExpr = LiteralExpr;
+var VariableExpr = /** @class */ (function (_super) {
+    __extends(VariableExpr, _super);
+    function VariableExpr(name) {
+        var _this = _super.call(this) || this;
+        _this.name = name;
+        return _this;
+    }
+    VariableExpr.prototype.accept = function (visitor) {
+        return visitor.visitVariableExpr(this);
+    };
+    return VariableExpr;
+}(Expr));
+exports.VariableExpr = VariableExpr;
+var AssignExpr = /** @class */ (function (_super) {
+    __extends(AssignExpr, _super);
+    function AssignExpr(name, value) {
+        var _this = _super.call(this) || this;
+        _this.name = name;
+        _this.value = value;
+        return _this;
+    }
+    AssignExpr.prototype.accept = function (visitor) {
+        return visitor.visitAssignExpr(this);
+    };
+    return AssignExpr;
+}(Expr));
+exports.AssignExpr = AssignExpr;

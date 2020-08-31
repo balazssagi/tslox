@@ -1,10 +1,40 @@
-import { BinaryExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, UnaryExpr } from "./Expr";
+import { Environment } from "./Environment";
+import { AssignExpr, BinaryExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr } from "./Expr";
 import { Lox } from "./Lox";
+import { BlockStmt, ExpressionStmt, PrintStmt, Stmt, StmtVisitor, VarStmt } from "./Stmt";
 import { Token } from "./Token";
 
-type Value = boolean | number | string | null
+export type Value = boolean | number | string | null
 
-export class Interpreter implements ExprVisitor<Value> {
+export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
+    private environment = new Environment()
+
+
+    visitVarStmt(stmt: VarStmt) {
+        let value: Value = null
+        if (stmt.initializer !== undefined) {
+            value = this.evaulate(stmt.initializer)
+        }
+        this.environment.define(stmt.name.lexeme, value)
+    }
+
+    visitExpressionStmt(stmt: ExpressionStmt) {
+        this.evaulate(stmt.expression)
+    }
+
+    visitPrintStmt(stmt: PrintStmt) {
+        const value = this.evaulate(stmt.expression)
+        console.log(this.stringify(value))
+    }
+
+    visitBlockStmt(stmt: BlockStmt) {
+        this.executeBlock(stmt.statements, new Environment(this.environment))
+    }
+
+    visitVariableExpr(expr: VariableExpr): Value {
+        return this.environment.get(expr.name)
+    }
+
     visitLiteralExpr(expr: LiteralExpr): Value {
         return expr.value
     }
@@ -81,10 +111,18 @@ export class Interpreter implements ExprVisitor<Value> {
         throw new Error()
     }
 
-    interpret(expr: Expr) {
+    visitAssignExpr(expr: AssignExpr): Value {
+        const value = this.evaulate(expr.value)
+
+        this.environment.assign(expr.name, value)
+        return value
+    }
+
+    interpret(statements: Stmt[]) {
         try {
-            const value = this.evaulate(expr)
-            console.log(this.stringify(value))
+            for (const statement of statements) {
+                this.execute(statement)                
+            }
         }
         catch(e) {
             Lox.runtimeError(e)
@@ -119,6 +157,23 @@ export class Interpreter implements ExprVisitor<Value> {
 
     private evaulate(expr: Expr) {
         return expr.accept(this)
+    }
+
+    private execute(stmt: Stmt) {
+        return stmt.accept(this)
+    }
+
+    private executeBlock(statements: Stmt[], environment: Environment) {
+        const prevEnvironment = this.environment
+        try {
+            this.environment = environment
+            for (const statement of statements) {
+                this.execute(statement)
+            }
+        }
+        finally {
+            this.environment = prevEnvironment
+        }
     }
 }
 

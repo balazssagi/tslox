@@ -39,13 +39,13 @@ export class Lox {
         const scanner = new Scanner(source)
         const tokens = scanner.scanTokens()
         const parser = new Parser(tokens)
-        const expr = parser.parse()
+        const statements = parser.parse()
 
-        if (this.hadError || !expr) {
+        if (this.hadError) {
             return
         }
 
-        this.interpreter.interpret(expr)
+        this.interpreter.interpret(statements)
     }
 
     static runtimeError(error: RuntimeError) {

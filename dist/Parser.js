@@ -16,21 +16,88 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Parser = void 0;
 var Expr_1 = require("./Expr");
 var Lox_1 = require("./Lox");
+var Stmt_1 = require("./Stmt");
 var Parser = /** @class */ (function () {
     function Parser(tokens) {
         this.tokens = tokens;
         this.current = 0;
     }
     Parser.prototype.parse = function () {
+        var statements = [];
+        while (!this.isAtEnd()) {
+            var declaration = this.declaration();
+            if (declaration) {
+                statements.push(declaration);
+            }
+        }
+        return statements;
+    };
+    Parser.prototype.declaration = function () {
         try {
-            return this.expression();
+            if (this.match('VAR')) {
+                return this.varDeclaration();
+            }
+            return this.statement();
         }
         catch (e) {
+            this.synchronize();
             return null;
         }
     };
+    Parser.prototype.varDeclaration = function () {
+        var name = this.consume('IDENTIFIER', "Expect variable name.");
+        var initializer;
+        if (this.match('EQUAL')) {
+            initializer = this.expression();
+        }
+        this.consume('SEMICOLON', "Expect ';' after variable declaration.");
+        return new Stmt_1.VarStmt(name, initializer);
+    };
+    Parser.prototype.statement = function () {
+        if (this.match('PRINT')) {
+            return this.printStatement();
+        }
+        if (this.match('LEFT_BRACE')) {
+            return this.blockStatemnt();
+        }
+        return this.expressionStatement();
+    };
+    Parser.prototype.printStatement = function () {
+        var expr = this.expression();
+        this.consume('SEMICOLON', "Expect ';' after value.");
+        return new Stmt_1.PrintStmt(expr);
+    };
+    Parser.prototype.blockStatemnt = function () {
+        var statements = [];
+        while (!this.check('RIGHT_BRACE') && !this.isAtEnd()) {
+            var statement = this.declaration();
+            if (statement) {
+                statements.push(statement);
+            }
+        }
+        this.consume('RIGHT_BRACE', "Expect '}' after block.");
+        return new Stmt_1.BlockStmt(statements);
+    };
+    Parser.prototype.expressionStatement = function () {
+        var expr = this.expression();
+        this.consume('SEMICOLON', "Expect ';' after expression.");
+        return new Stmt_1.ExpressionStmt(expr);
+    };
     Parser.prototype.expression = function () {
-        return this.equality();
+        return this.assignment();
+    };
+    Parser.prototype.assignment = function () {
+        var expr = this.equality();
+        if (this.match('EQUAL')) {
+            var equals = this.previous();
+            var value = this.assignment();
+            if (expr instanceof Expr_1.VariableExpr) {
+                var name_1 = expr.name;
+                return new Expr_1.AssignExpr(name_1, value);
+            }
+            this.error(equals, 'Invalid left-hand side in assignment.');
+        }
+        return expr;
     };
     Parser.prototype.equality = function () {
         var expr = this.comparison();
@@ -91,6 +158,9 @@ var Parser = /** @class */ (function () {
             this.consume('RIGHT_PAREN', "Expect ')' after expression.");
             return new Expr_1.GroupingExpr(expr);
         }
+        if (this.match('IDENTIFIER')) {
+            return new Expr_1.VariableExpr(this.previous());
+        }
         throw this.error(this.peek(), "Expect expression.");
     };
     Parser.prototype.error = function (token, message) {
@@ -137,6 +207,26 @@ var Parser = /** @class */ (function () {
     };
     Parser.prototype.previous = function () {
         return this.tokens[this.current - 1];
+    };
+    Parser.prototype.synchronize = function () {
+        this.advance();
+        while (!this.isAtEnd()) {
+            if (this.previous().type === 'SEMICOLON') {
+                return;
+            }
+            switch (this.peek().type) {
+                case 'CLASS':
+                case 'FUN':
+                case 'VAR':
+                case 'FOR':
+                case 'IF':
+                case 'WHILE':
+                case 'PRINT':
+                case 'RETURN':
+                    return;
+            }
+            this.advance();
+        }
     };
     return Parser;
 }());

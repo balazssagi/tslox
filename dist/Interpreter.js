@@ -14,10 +14,32 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RuntimeError = exports.Interpreter = void 0;
+var Environment_1 = require("./Environment");
 var Lox_1 = require("./Lox");
 var Interpreter = /** @class */ (function () {
     function Interpreter() {
+        this.environment = new Environment_1.Environment();
     }
+    Interpreter.prototype.visitVarStmt = function (stmt) {
+        var value = null;
+        if (stmt.initializer !== undefined) {
+            value = this.evaulate(stmt.initializer);
+        }
+        this.environment.define(stmt.name.lexeme, value);
+    };
+    Interpreter.prototype.visitExpressionStmt = function (stmt) {
+        this.evaulate(stmt.expression);
+    };
+    Interpreter.prototype.visitPrintStmt = function (stmt) {
+        var value = this.evaulate(stmt.expression);
+        console.log(this.stringify(value));
+    };
+    Interpreter.prototype.visitBlockStmt = function (stmt) {
+        this.executeBlock(stmt.statements, new Environment_1.Environment(this.environment));
+    };
+    Interpreter.prototype.visitVariableExpr = function (expr) {
+        return this.environment.get(expr.name);
+    };
     Interpreter.prototype.visitLiteralExpr = function (expr) {
         return expr.value;
     };
@@ -87,10 +109,17 @@ var Interpreter = /** @class */ (function () {
         // ???
         throw new Error();
     };
-    Interpreter.prototype.interpret = function (expr) {
+    Interpreter.prototype.visitAssignExpr = function (expr) {
+        var value = this.evaulate(expr.value);
+        this.environment.assign(expr.name, value);
+        return value;
+    };
+    Interpreter.prototype.interpret = function (statements) {
         try {
-            var value = this.evaulate(expr);
-            console.log(this.stringify(value));
+            for (var _i = 0, statements_1 = statements; _i < statements_1.length; _i++) {
+                var statement = statements_1[_i];
+                this.execute(statement);
+            }
         }
         catch (e) {
             Lox_1.Lox.runtimeError(e);
@@ -119,6 +148,22 @@ var Interpreter = /** @class */ (function () {
     };
     Interpreter.prototype.evaulate = function (expr) {
         return expr.accept(this);
+    };
+    Interpreter.prototype.execute = function (stmt) {
+        return stmt.accept(this);
+    };
+    Interpreter.prototype.executeBlock = function (statements, environment) {
+        var prevEnvironment = this.environment;
+        try {
+            this.environment = environment;
+            for (var _i = 0, statements_2 = statements; _i < statements_2.length; _i++) {
+                var statement = statements_2[_i];
+                this.execute(statement);
+            }
+        }
+        finally {
+            this.environment = prevEnvironment;
+        }
     };
     return Interpreter;
 }());

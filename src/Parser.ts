@@ -1,5 +1,7 @@
-import { BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr } from "./Expr"
+import { AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr } from "./Expr"
+import { RuntimeError } from "./Interpreter"
 import { Lox } from "./Lox"
+import { BlockStmt, ExpressionStmt, PrintStmt, Stmt, VarStmt } from "./Stmt"
 import { Token } from "./Token"
 import { TokenType } from "./TokenType"
 
@@ -9,16 +11,99 @@ export class Parser {
     constructor(private tokens: Token[]) {}
 
     public parse() {
+        const statements: Stmt[] = []
+        while (!this.isAtEnd()) {
+            const declaration = this.declaration()
+            if (declaration) {
+                statements.push(declaration)
+            }
+        }
+        
+        return statements
+    }
+
+    private declaration() {
         try {
-            return this.expression()
+            if (this.match('VAR')) {
+                return this.varDeclaration()
+            }
+            return this.statement()
         }
         catch(e) {
+            this.synchronize()
             return null
         }
     }
 
+    private varDeclaration() {
+        const name = this.consume('IDENTIFIER', "Expect variable name.")
+
+        let initializer: Expr | undefined
+        if (this.match('EQUAL')) {
+            initializer = this.expression()
+        }
+        this.consume('SEMICOLON', "Expect ';' after variable declaration.")
+        return new VarStmt(name, initializer)
+    }
+
+    private statement() {
+        if (this.match('PRINT')) {
+            return this.printStatement()
+        }
+        if (this.match('LEFT_BRACE')) {
+            return this.blockStatemnt()
+        }
+
+        return this.expressionStatement()
+    }
+
+    private printStatement() {
+        const expr = this.expression()
+        this.consume('SEMICOLON', "Expect ';' after value.")
+        return new PrintStmt(expr)
+    }
+
+    private blockStatemnt() {
+        const statements: Stmt[] = []
+
+        while (!this.check('RIGHT_BRACE') && !this.isAtEnd()) {
+            const statement = this.declaration()
+            if (statement) {
+                statements.push(statement)
+            }
+        }
+
+        this.consume('RIGHT_BRACE', "Expect '}' after block.")
+
+        return new BlockStmt(statements)
+    }
+
+    private expressionStatement() {
+        const expr = this.expression()
+        this.consume('SEMICOLON', "Expect ';' after expression.")
+        return new ExpressionStmt(expr)
+    }
+
     private expression(): Expr {
-        return this.equality()
+        return this.assignment()
+    }
+
+    private assignment(): Expr {
+        const expr = this.equality()
+
+        if (this.match('EQUAL')) {
+            const equals = this.previous()
+            const value = this.assignment()
+
+            if (expr instanceof VariableExpr) {
+               const name = expr.name
+               return new AssignExpr(name, value)
+            }
+
+            this.error(equals, 'Invalid left-hand side in assignment.')
+        }
+
+        return expr
     }
 
     private equality(): Expr {
@@ -93,6 +178,10 @@ export class Parser {
             return new GroupingExpr(expr)
         }
 
+        if (this.match('IDENTIFIER')) {
+            return new VariableExpr(this.previous())
+        }
+
         throw this.error(this.peek(), "Expect expression.")
     }
 
@@ -144,6 +233,29 @@ export class Parser {
 
     private previous() {
         return this.tokens[this.current - 1]
+    }
+
+    private synchronize() {
+        this.advance()
+
+        while (!this.isAtEnd()) {
+            if (this.previous().type === 'SEMICOLON') {
+                return
+            }
+            switch (this.peek().type) {
+                case 'CLASS':
+                case 'FUN':
+                case 'VAR':
+                case 'FOR':
+                case 'IF':
+                case 'WHILE':
+                case 'PRINT':
+                case 'RETURN':
+                      return;
+            }
+
+            this.advance()
+        }
     }
 }
 

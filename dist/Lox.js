@@ -37,11 +37,11 @@ var Lox = /** @class */ (function () {
         var scanner = new Scanner_1.Scanner(source);
         var tokens = scanner.scanTokens();
         var parser = new Parser_1.Parser(tokens);
-        var expr = parser.parse();
-        if (this.hadError || !expr) {
+        var statements = parser.parse();
+        if (this.hadError) {
             return;
         }
-        this.interpreter.interpret(expr);
+        this.interpreter.interpret(statements);
     };
     Lox.runtimeError = function (error) {
         console.error("[line " + error.token.line + "] Runtime error: " + error.message);

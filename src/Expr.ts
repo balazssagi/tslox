@@ -1,3 +1,4 @@
+import { Value } from "./Interpreter"
 import { Token } from "./Token"
 
 export interface ExprVisitor<T> {
@@ -5,6 +6,8 @@ export interface ExprVisitor<T> {
     visitBinaryExpr(expr: BinaryExpr): T
     visitGroupingExpr(expr: GroupingExpr): T
     visitLiteralExpr(expr: LiteralExpr): T
+    visitVariableExpr(expr: VariableExpr): T
+    visitAssignExpr(expr: AssignExpr): T
 }
 
 export abstract class Expr {
@@ -45,5 +48,23 @@ export class LiteralExpr extends Expr {
     }
     accept<T>(visitor: ExprVisitor<T>) {
         return visitor.visitLiteralExpr(this)
+    }
+}
+
+export class VariableExpr extends Expr {
+    constructor(public name: Token) {
+        super()
+    }
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitVariableExpr(this)
+    }
+}
+
+export class AssignExpr extends Expr {
+    constructor(public name: Token, public value: Expr) {
+        super()
+    }
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitAssignExpr(this)
     }
 }
