@@ -53,6 +53,9 @@ export class Parser {
         if (this.match('WHILE')) {
             return this.whileStatement()
         }
+        if (this.match('FOR')) {
+            return this.forStatement()
+        }
         if (this.match('PRINT')) {
             return this.printStatement()
         }
@@ -79,10 +82,53 @@ export class Parser {
     private whileStatement(): Stmt {
         this.consume('LEFT_PAREN', "Expect '(' after 'while'.")
         const condition = this.expression()
-        this.consume('RIGHT_PAREN', "Expect ')' after while condition.")
+        this.consume('RIGHT_PAREN', "Expect ')' after 'while' condition.")
         const body = this.statement()
 
         return new WhileStmt(condition, body)
+    }
+
+    private forStatement(): Stmt {
+        this.consume('LEFT_PAREN', "Expect '(' after 'for'.")
+        let initializer: Stmt | undefined
+        if (this.match('SEMICOLON')) { }
+        else if (this.match('VAR')) {
+            initializer = this.varDeclaration()
+        }
+        else {
+            initializer = this.expressionStatement()
+        }
+
+        let condition: Expr | undefined
+        if (!this.match('SEMICOLON')) {
+            condition = this.expression()
+        }
+        else {
+            condition = new LiteralExpr(true)
+        }
+        
+        this.consume('SEMICOLON', "Expect ';' after loop condition.")
+        
+        let increment: Expr | undefined
+        if (!this.check('RIGHT_PAREN')) {
+            increment = this.expression()
+        }
+        
+        this.consume('RIGHT_PAREN', "Expect ')' after for clauses.")
+
+        let body = this.statement()
+
+        if (increment) {
+            body = new BlockStmt([body, new ExpressionStmt(increment)])
+        }
+
+        body = new WhileStmt(condition, body)
+
+        if (initializer) {
+            body = new BlockStmt([initializer, body])
+        }
+
+        return body
     }
 
     private printStatement() {

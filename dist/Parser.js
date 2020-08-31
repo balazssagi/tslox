@@ -60,6 +60,9 @@ var Parser = /** @class */ (function () {
         if (this.match('WHILE')) {
             return this.whileStatement();
         }
+        if (this.match('FOR')) {
+            return this.forStatement();
+        }
         if (this.match('PRINT')) {
             return this.printStatement();
         }
@@ -82,9 +85,42 @@ var Parser = /** @class */ (function () {
     Parser.prototype.whileStatement = function () {
         this.consume('LEFT_PAREN', "Expect '(' after 'while'.");
         var condition = this.expression();
-        this.consume('RIGHT_PAREN', "Expect ')' after while condition.");
+        this.consume('RIGHT_PAREN', "Expect ')' after 'while' condition.");
         var body = this.statement();
         return new Stmt_1.WhileStmt(condition, body);
+    };
+    Parser.prototype.forStatement = function () {
+        this.consume('LEFT_PAREN', "Expect '(' after 'for'.");
+        var initializer;
+        if (this.match('SEMICOLON')) { }
+        else if (this.match('VAR')) {
+            initializer = this.varDeclaration();
+        }
+        else {
+            initializer = this.expressionStatement();
+        }
+        var condition;
+        if (!this.match('SEMICOLON')) {
+            condition = this.expression();
+        }
+        else {
+            condition = new Expr_1.LiteralExpr(true);
+        }
+        this.consume('SEMICOLON', "Expect ';' after loop condition.");
+        var increment;
+        if (!this.check('RIGHT_PAREN')) {
+            increment = this.expression();
+        }
+        this.consume('RIGHT_PAREN', "Expect ')' after for clauses.");
+        var body = this.statement();
+        if (increment) {
+            body = new Stmt_1.BlockStmt([body, new Stmt_1.ExpressionStmt(increment)]);
+        }
+        body = new Stmt_1.WhileStmt(condition, body);
+        if (initializer) {
+            body = new Stmt_1.BlockStmt([initializer, body]);
+        }
+        return body;
     };
     Parser.prototype.printStatement = function () {
         var expr = this.expression();
