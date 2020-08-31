@@ -1,7 +1,7 @@
-import { AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr } from "./Expr"
+import { AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr"
 import { RuntimeError } from "./Interpreter"
 import { Lox } from "./Lox"
-import { BlockStmt, ExpressionStmt, PrintStmt, Stmt, VarStmt } from "./Stmt"
+import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt, WhileStmt } from "./Stmt"
 import { Token } from "./Token"
 import { TokenType } from "./TokenType"
 
@@ -47,6 +47,12 @@ export class Parser {
     }
 
     private statement() {
+        if (this.match('IF')) {
+            return this.ifStatement()
+        }
+        if (this.match('WHILE')) {
+            return this.whileStatement()
+        }
         if (this.match('PRINT')) {
             return this.printStatement()
         }
@@ -55,6 +61,28 @@ export class Parser {
         }
 
         return this.expressionStatement()
+    }
+
+    private ifStatement(): Stmt {
+        this.consume('LEFT_PAREN', "Expect '(' after 'if'.")
+        const condition = this.expression()
+        this.consume('RIGHT_PAREN', "Expect ')' after if condition.")
+
+        const thenBranch = this.statement()
+        let elseBranch: Stmt | undefined
+        if (this.match('ELSE')) {
+            elseBranch = this.statement()
+        }
+        return new IfStmt(condition, thenBranch, elseBranch)
+    }
+
+    private whileStatement(): Stmt {
+        this.consume('LEFT_PAREN', "Expect '(' after 'while'.")
+        const condition = this.expression()
+        this.consume('RIGHT_PAREN', "Expect ')' after while condition.")
+        const body = this.statement()
+
+        return new WhileStmt(condition, body)
     }
 
     private printStatement() {
@@ -89,11 +117,11 @@ export class Parser {
     }
 
     private assignment(): Expr {
-        const expr = this.equality()
+        const expr = this.or()
 
         if (this.match('EQUAL')) {
             const equals = this.previous()
-            const value = this.assignment()
+            const value = this.or()
 
             if (expr instanceof VariableExpr) {
                const name = expr.name
@@ -101,6 +129,30 @@ export class Parser {
             }
 
             this.error(equals, 'Invalid left-hand side in assignment.')
+        }
+
+        return expr
+    }
+
+    private or(): Expr {
+        const expr = this.and()
+
+        while(this.match('OR')) {
+            const operator = this.previous()
+            const right = this.and()
+            return new LogicalExpr(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    private and(): Expr {
+        const expr = this.equality()
+
+        while(this.match('AND')) {
+            const operator = this.previous()
+            const right = this.equality()
+            return new LogicalExpr(expr, operator, right)
         }
 
         return expr

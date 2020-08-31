@@ -1,7 +1,7 @@
 import { Environment } from "./Environment";
-import { AssignExpr, BinaryExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr } from "./Expr";
+import { AssignExpr, BinaryExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr";
 import { Lox } from "./Lox";
-import { BlockStmt, ExpressionStmt, PrintStmt, Stmt, StmtVisitor, VarStmt } from "./Stmt";
+import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "./Stmt";
 import { Token } from "./Token";
 
 export type Value = boolean | number | string | null
@@ -25,6 +25,21 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     visitPrintStmt(stmt: PrintStmt) {
         const value = this.evaulate(stmt.expression)
         console.log(this.stringify(value))
+    }
+    
+    visitIfStmt(stmt: IfStmt) {
+        if (this.isTruthy(this.evaulate(stmt.condition))) {
+            this.execute(stmt.thenBranch)
+        }
+        else if (stmt.elseBranch) {
+            this.execute(stmt.elseBranch)
+        }
+    }
+
+    visitWhileStmt(stmt: WhileStmt) {
+        while (this.evaulate(stmt.condition)) {
+            this.execute(stmt.body)
+        }
     }
 
     visitBlockStmt(stmt: BlockStmt) {
@@ -109,6 +124,18 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
 
         // ???
         throw new Error()
+    }
+
+    visitLogicalExpr(expr: LogicalExpr): Value {
+        const left = this.evaulate(expr.left);
+
+        if (expr.operator.type == 'OR') {
+            if (this.isTruthy(left)) return left;
+        } else {
+            if (!this.isTruthy(left)) return left;
+        }
+
+        return this.evaulate(expr.right)
     }
 
     visitAssignExpr(expr: AssignExpr): Value {

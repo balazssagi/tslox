@@ -34,6 +34,19 @@ var Interpreter = /** @class */ (function () {
         var value = this.evaulate(stmt.expression);
         console.log(this.stringify(value));
     };
+    Interpreter.prototype.visitIfStmt = function (stmt) {
+        if (this.isTruthy(this.evaulate(stmt.condition))) {
+            this.execute(stmt.thenBranch);
+        }
+        else if (stmt.elseBranch) {
+            this.execute(stmt.elseBranch);
+        }
+    };
+    Interpreter.prototype.visitWhileStmt = function (stmt) {
+        while (this.evaulate(stmt.condition)) {
+            this.execute(stmt.body);
+        }
+    };
     Interpreter.prototype.visitBlockStmt = function (stmt) {
         this.executeBlock(stmt.statements, new Environment_1.Environment(this.environment));
     };
@@ -108,6 +121,18 @@ var Interpreter = /** @class */ (function () {
         }
         // ???
         throw new Error();
+    };
+    Interpreter.prototype.visitLogicalExpr = function (expr) {
+        var left = this.evaulate(expr.left);
+        if (expr.operator.type == 'OR') {
+            if (this.isTruthy(left))
+                return left;
+        }
+        else {
+            if (!this.isTruthy(left))
+                return left;
+        }
+        return this.evaulate(expr.right);
     };
     Interpreter.prototype.visitAssignExpr = function (expr) {
         var value = this.evaulate(expr.value);

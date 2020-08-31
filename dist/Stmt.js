@@ -13,7 +13,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BlockStmt = exports.VarStmt = exports.PrintStmt = exports.ExpressionStmt = exports.Stmt = void 0;
+exports.WhileStmt = exports.IfStmt = exports.BlockStmt = exports.VarStmt = exports.PrintStmt = exports.ExpressionStmt = exports.Stmt = void 0;
 var Stmt = /** @class */ (function () {
     function Stmt() {
     }
@@ -73,3 +73,32 @@ var BlockStmt = /** @class */ (function (_super) {
     return BlockStmt;
 }(Stmt));
 exports.BlockStmt = BlockStmt;
+var IfStmt = /** @class */ (function (_super) {
+    __extends(IfStmt, _super);
+    function IfStmt(condition, thenBranch, elseBranch) {
+        var _this = _super.call(this) || this;
+        _this.condition = condition;
+        _this.thenBranch = thenBranch;
+        _this.elseBranch = elseBranch;
+        return _this;
+    }
+    IfStmt.prototype.accept = function (visitor) {
+        return visitor.visitIfStmt(this);
+    };
+    return IfStmt;
+}(Stmt));
+exports.IfStmt = IfStmt;
+var WhileStmt = /** @class */ (function (_super) {
+    __extends(WhileStmt, _super);
+    function WhileStmt(condition, body) {
+        var _this = _super.call(this) || this;
+        _this.condition = condition;
+        _this.body = body;
+        return _this;
+    }
+    WhileStmt.prototype.accept = function (visitor) {
+        return visitor.visitWhileStmt(this);
+    };
+    return WhileStmt;
+}(Stmt));
+exports.WhileStmt = WhileStmt;

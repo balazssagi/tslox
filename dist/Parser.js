@@ -54,6 +54,12 @@ var Parser = /** @class */ (function () {
         return new Stmt_1.VarStmt(name, initializer);
     };
     Parser.prototype.statement = function () {
+        if (this.match('IF')) {
+            return this.ifStatement();
+        }
+        if (this.match('WHILE')) {
+            return this.whileStatement();
+        }
         if (this.match('PRINT')) {
             return this.printStatement();
         }
@@ -61,6 +67,24 @@ var Parser = /** @class */ (function () {
             return this.blockStatemnt();
         }
         return this.expressionStatement();
+    };
+    Parser.prototype.ifStatement = function () {
+        this.consume('LEFT_PAREN', "Expect '(' after 'if'.");
+        var condition = this.expression();
+        this.consume('RIGHT_PAREN', "Expect ')' after if condition.");
+        var thenBranch = this.statement();
+        var elseBranch;
+        if (this.match('ELSE')) {
+            elseBranch = this.statement();
+        }
+        return new Stmt_1.IfStmt(condition, thenBranch, elseBranch);
+    };
+    Parser.prototype.whileStatement = function () {
+        this.consume('LEFT_PAREN', "Expect '(' after 'while'.");
+        var condition = this.expression();
+        this.consume('RIGHT_PAREN', "Expect ')' after while condition.");
+        var body = this.statement();
+        return new Stmt_1.WhileStmt(condition, body);
     };
     Parser.prototype.printStatement = function () {
         var expr = this.expression();
@@ -87,15 +111,33 @@ var Parser = /** @class */ (function () {
         return this.assignment();
     };
     Parser.prototype.assignment = function () {
-        var expr = this.equality();
+        var expr = this.or();
         if (this.match('EQUAL')) {
             var equals = this.previous();
-            var value = this.assignment();
+            var value = this.or();
             if (expr instanceof Expr_1.VariableExpr) {
                 var name_1 = expr.name;
                 return new Expr_1.AssignExpr(name_1, value);
             }
             this.error(equals, 'Invalid left-hand side in assignment.');
+        }
+        return expr;
+    };
+    Parser.prototype.or = function () {
+        var expr = this.and();
+        while (this.match('OR')) {
+            var operator = this.previous();
+            var right = this.and();
+            return new Expr_1.LogicalExpr(expr, operator, right);
+        }
+        return expr;
+    };
+    Parser.prototype.and = function () {
+        var expr = this.equality();
+        while (this.match('AND')) {
+            var operator = this.previous();
+            var right = this.equality();
+            return new Expr_1.LogicalExpr(expr, operator, right);
         }
         return expr;
     };

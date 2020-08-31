@@ -8,6 +8,7 @@ export interface ExprVisitor<T> {
     visitLiteralExpr(expr: LiteralExpr): T
     visitVariableExpr(expr: VariableExpr): T
     visitAssignExpr(expr: AssignExpr): T
+    visitLogicalExpr(expr: LogicalExpr): T
 }
 
 export abstract class Expr {
@@ -66,5 +67,14 @@ export class AssignExpr extends Expr {
     }
     accept<T>(visitor: ExprVisitor<T>) {
         return visitor.visitAssignExpr(this)
+    }
+}
+
+export class LogicalExpr extends Expr {
+    constructor(public left: Expr, public operator: Token, public right: Expr) {
+        super()
+    }
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitLogicalExpr(this)
     }
 }
