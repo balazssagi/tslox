@@ -1,5 +1,4 @@
-import { AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr"
-import { RuntimeError } from "./Interpreter"
+import { AssignExpr, BinaryExpr, CallExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr"
 import { Lox } from "./Lox"
 import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt, WhileStmt } from "./Stmt"
 import { Token } from "./Token"
@@ -258,7 +257,17 @@ export class Parser {
             const right = this.unary()
             return new UnaryExpr(operator, right)
         }
-        return this.primary()
+        return this.call()
+    }
+
+    private call() {
+        let expr = this.primary()
+
+        while (this.match('LEFT_PAREN')) {
+            expr = this.finishCall(expr)
+        }
+
+        return expr
     }
 
     private primary(): Expr {
@@ -281,6 +290,22 @@ export class Parser {
         }
 
         throw this.error(this.peek(), "Expect expression.")
+    }
+    
+    private finishCall(callee: Expr) {
+        const args: Expr[] = []
+        if (!this.check('RIGHT_PAREN')) {
+            do {
+                if (arguments.length >= 255) {
+                    this.error(this.peek(), "Cannot have more than 255 arguments.");
+                }
+                args.push(this.expression())
+            } while (this.match('COMMA'))
+        }
+
+        const token = this.consume('RIGHT_PAREN', "Expect ')' after arguments.")
+
+        return new CallExpr(callee, token, args)
     }
 
     private error(token: Token, message: string) {

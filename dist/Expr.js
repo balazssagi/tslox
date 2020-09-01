@@ -13,7 +13,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LogicalExpr = exports.AssignExpr = exports.VariableExpr = exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.UnaryExpr = exports.Expr = void 0;
+exports.CallExpr = exports.LogicalExpr = exports.AssignExpr = exports.VariableExpr = exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.UnaryExpr = exports.Expr = void 0;
 var Expr = /** @class */ (function () {
     function Expr() {
     }
@@ -117,3 +117,18 @@ var LogicalExpr = /** @class */ (function (_super) {
     return LogicalExpr;
 }(Expr));
 exports.LogicalExpr = LogicalExpr;
+var CallExpr = /** @class */ (function (_super) {
+    __extends(CallExpr, _super);
+    function CallExpr(callee, token, args) {
+        var _this = _super.call(this) || this;
+        _this.callee = callee;
+        _this.token = token;
+        _this.args = args;
+        return _this;
+    }
+    CallExpr.prototype.accept = function (visitor) {
+        return visitor.visitCallExpr(this);
+    };
+    return CallExpr;
+}(Expr));
+exports.CallExpr = CallExpr;

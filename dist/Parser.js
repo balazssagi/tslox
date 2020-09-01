@@ -219,7 +219,14 @@ var Parser = /** @class */ (function () {
             var right = this.unary();
             return new Expr_1.UnaryExpr(operator, right);
         }
-        return this.primary();
+        return this.call();
+    };
+    Parser.prototype.call = function () {
+        var expr = this.primary();
+        while (this.match('LEFT_PAREN')) {
+            expr = this.finishCall(expr);
+        }
+        return expr;
     };
     Parser.prototype.primary = function () {
         if (this.match('FALSE'))
@@ -240,6 +247,19 @@ var Parser = /** @class */ (function () {
             return new Expr_1.VariableExpr(this.previous());
         }
         throw this.error(this.peek(), "Expect expression.");
+    };
+    Parser.prototype.finishCall = function (callee) {
+        var args = [];
+        if (!this.check('RIGHT_PAREN')) {
+            do {
+                if (arguments.length >= 255) {
+                    this.error(this.peek(), "Cannot have more than 255 arguments.");
+                }
+                args.push(this.expression());
+            } while (this.match('COMMA'));
+        }
+        var token = this.consume('RIGHT_PAREN', "Expect ')' after arguments.");
+        return new Expr_1.CallExpr(callee, token, args);
     };
     Parser.prototype.error = function (token, message) {
         Lox_1.Lox.error(token.line, message);

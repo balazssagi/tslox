@@ -16,9 +16,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RuntimeError = exports.Interpreter = void 0;
 var Environment_1 = require("./Environment");
 var Lox_1 = require("./Lox");
+var Callable_1 = require("./Callable");
+var globals_1 = require("./globals");
 var Interpreter = /** @class */ (function () {
     function Interpreter() {
-        this.environment = new Environment_1.Environment();
+        this.globals = new Environment_1.Environment();
+        this.environment = this.globals;
+        for (var _i = 0, _a = Object.entries(globals_1.globals); _i < _a.length; _i++) {
+            var _b = _a[_i], name_1 = _b[0], loxFunction = _b[1];
+            this.environment.define(name_1, loxFunction);
+        }
     }
     Interpreter.prototype.visitVarStmt = function (stmt) {
         var value = null;
@@ -58,6 +65,18 @@ var Interpreter = /** @class */ (function () {
     };
     Interpreter.prototype.visitGroupingExpr = function (expr) {
         return this.evaulate(expr.expression);
+    };
+    Interpreter.prototype.visitCallExpr = function (expr) {
+        var _this = this;
+        var callee = this.evaulate(expr.callee);
+        var args = expr.args.map(function (arg) { return _this.evaulate(arg); });
+        if (!(callee instanceof Callable_1.Callable)) {
+            throw new RuntimeError(expr.token, "Can only call functions and classes.");
+        }
+        if (args.length !== callee.arity()) {
+            throw new RuntimeError(expr.token, "Expected " + callee.arity() + " arguments but got " + args.length + ".");
+        }
+        return callee.call(this, args);
     };
     Interpreter.prototype.visitBinaryExpr = function (expr) {
         var left = this.evaulate(expr.left);

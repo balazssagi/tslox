@@ -1,13 +1,22 @@
 import { Environment } from "./Environment";
-import { AssignExpr, BinaryExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr";
+import { AssignExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr";
 import { Lox } from "./Lox";
 import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "./Stmt";
 import { Token } from "./Token";
+import { Callable } from './Callable'
+import { globals } from "./globals";
 
-export type Value = boolean | number | string | null
+export type Value = boolean | number | string | null | Callable
 
 export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
-    private environment = new Environment()
+    private globals = new Environment()
+    private environment = this.globals
+
+    constructor() {
+        for (const [name, loxFunction] of Object.entries(globals)) {
+            this.environment.define(name, loxFunction);
+        }
+    }
 
 
     visitVarStmt(stmt: VarStmt) {
@@ -23,6 +32,7 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     }
 
     visitPrintStmt(stmt: PrintStmt) {
+        
         const value = this.evaulate(stmt.expression)
         console.log(this.stringify(value))
     }
@@ -56,6 +66,24 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
 
     visitGroupingExpr(expr: GroupingExpr): Value {
         return this.evaulate(expr.expression)
+    }
+
+    visitCallExpr(expr: CallExpr): Value {
+        const callee = this.evaulate(expr.callee)
+        const args = expr.args.map(arg => this.evaulate(arg))
+
+        if (!(callee instanceof Callable)) {
+            throw new RuntimeError(expr.token, "Can only call functions and classes.")
+        }
+
+        if (args.length !== callee.arity()) {
+            throw new RuntimeError(
+                expr.token,
+                "Expected " + callee.arity() + " arguments but got " + args.length + "."
+            );
+        }
+
+        return callee.call(this, args)     
     }
 
     visitBinaryExpr(expr: BinaryExpr): Value {
