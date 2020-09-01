@@ -1,7 +1,5 @@
-import { LoxFunction } from "./Callable"
+import { NativeFunction } from "./Callable"
 
-export const globals: Record<string, LoxFunction> = {
-    'clock': new LoxFunction(() => Date.now(), () => 0),
+export const globals: Record<string, NativeFunction> = {
+    'clock': new NativeFunction(0, () => Date.now()),
 }
-
-Object.values(globals).forEach(global => global.toString = () => '<native fn>')

@@ -1,6 +1,6 @@
 import { AssignExpr, BinaryExpr, CallExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr"
 import { Lox } from "./Lox"
-import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt, WhileStmt } from "./Stmt"
+import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, VarStmt, WhileStmt } from "./Stmt"
 import { Token } from "./Token"
 import { TokenType } from "./TokenType"
 
@@ -23,6 +23,9 @@ export class Parser {
 
     private declaration() {
         try {
+            if (this.match('FUN')) {
+                return this.function('function')
+            }
             if (this.match('VAR')) {
                 return this.varDeclaration()
             }
@@ -32,6 +35,35 @@ export class Parser {
             this.synchronize()
             return null
         }
+    }
+    
+    private function(kind: 'function') {
+        const name = this.consume('IDENTIFIER', `Expect ${kind} name.`)
+        
+        this.consume('LEFT_PAREN', `Expect '(' after ${kind} name.`)
+        const params: Token[] = []
+        
+        if (!this.check('RIGHT_PAREN')) {
+            do {
+                if (params.length >= 255) {
+                    this.error(
+                        this.peek(),
+                        'Cannot have more than 255 parameters.'
+                    );
+                }
+
+                params.push(
+                    this.consume('IDENTIFIER', 'Expect parameter name.')
+                );
+            } while (this.match('COMMA'));
+        }
+
+        this.consume('RIGHT_PAREN', `Expect ')' after parameters.`)
+
+        this.consume('LEFT_BRACE', `Expect '{' before ${kind} body.`)
+        const body = this.blockStatemnt()
+        
+        return new FunctionStmt(name, params, body.statements)
     }
 
     private varDeclaration() {
@@ -60,6 +92,9 @@ export class Parser {
         }
         if (this.match('LEFT_BRACE')) {
             return this.blockStatemnt()
+        }
+        if (this.match('RETURN')) {
+            return this.returnStatement()
         }
 
         return this.expressionStatement()
@@ -149,6 +184,18 @@ export class Parser {
         this.consume('RIGHT_BRACE', "Expect '}' after block.")
 
         return new BlockStmt(statements)
+    }
+
+    private returnStatement() {
+        const keyword = this.previous()
+
+        let value: Expr | undefined = undefined
+        if (!this.check('SEMICOLON')) {
+            value = this.expression()
+        }
+
+        this.consume('SEMICOLON', "Expect ';' after return value.")
+        return new ReturnStmt(keyword, value)
     }
 
     private expressionStatement() {

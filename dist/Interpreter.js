@@ -18,6 +18,7 @@ var Environment_1 = require("./Environment");
 var Lox_1 = require("./Lox");
 var Callable_1 = require("./Callable");
 var globals_1 = require("./globals");
+var Return_1 = require("./Return");
 var Interpreter = /** @class */ (function () {
     function Interpreter() {
         this.globals = new Environment_1.Environment();
@@ -27,6 +28,10 @@ var Interpreter = /** @class */ (function () {
             this.environment.define(name_1, loxFunction);
         }
     }
+    Interpreter.prototype.visitFunctionStmt = function (stmt) {
+        var fn = new Callable_1.LoxFunction(stmt, this.environment);
+        this.environment.define(stmt.name.lexeme, fn);
+    };
     Interpreter.prototype.visitVarStmt = function (stmt) {
         var value = null;
         if (stmt.initializer !== undefined) {
@@ -53,6 +58,13 @@ var Interpreter = /** @class */ (function () {
         while (this.evaulate(stmt.condition)) {
             this.execute(stmt.body);
         }
+    };
+    Interpreter.prototype.visitReturnStmt = function (stmt) {
+        var value = null;
+        if (stmt.value) {
+            value = this.evaulate(stmt.value);
+        }
+        throw new Return_1.Return(value);
     };
     Interpreter.prototype.visitBlockStmt = function (stmt) {
         this.executeBlock(stmt.statements, new Environment_1.Environment(this.environment));

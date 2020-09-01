@@ -1,15 +1,16 @@
 import { Environment } from "./Environment";
 import { AssignExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr";
 import { Lox } from "./Lox";
-import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "./Stmt";
+import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "./Stmt";
 import { Token } from "./Token";
-import { Callable } from './Callable'
+import { Callable, LoxFunction } from './Callable'
 import { globals } from "./globals";
+import { Return } from "./Return";
 
 export type Value = boolean | number | string | null | Callable
 
 export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
-    private globals = new Environment()
+    public globals = new Environment()
     private environment = this.globals
 
     constructor() {
@@ -18,6 +19,10 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         }
     }
 
+    visitFunctionStmt(stmt: FunctionStmt) {
+        const fn = new LoxFunction(stmt, this.environment)
+        this.environment.define(stmt.name.lexeme, fn)
+    }
 
     visitVarStmt(stmt: VarStmt) {
         let value: Value = null
@@ -50,6 +55,16 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         while (this.evaulate(stmt.condition)) {
             this.execute(stmt.body)
         }
+    }
+
+    visitReturnStmt(stmt: ReturnStmt) {
+        let value: Value = null
+        if (stmt.value) {
+            value = this.evaulate(stmt.value)
+        }
+
+        throw new Return(value)
+        
     }
 
     visitBlockStmt(stmt: BlockStmt) {
@@ -218,7 +233,7 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         return stmt.accept(this)
     }
 
-    private executeBlock(statements: Stmt[], environment: Environment) {
+    public executeBlock(statements: Stmt[], environment: Environment) {
         const prevEnvironment = this.environment
         try {
             this.environment = environment

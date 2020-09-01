@@ -34,6 +34,9 @@ var Parser = /** @class */ (function () {
     };
     Parser.prototype.declaration = function () {
         try {
+            if (this.match('FUN')) {
+                return this.function('function');
+            }
             if (this.match('VAR')) {
                 return this.varDeclaration();
             }
@@ -43,6 +46,23 @@ var Parser = /** @class */ (function () {
             this.synchronize();
             return null;
         }
+    };
+    Parser.prototype.function = function (kind) {
+        var name = this.consume('IDENTIFIER', "Expect " + kind + " name.");
+        this.consume('LEFT_PAREN', "Expect '(' after " + kind + " name.");
+        var params = [];
+        if (!this.check('RIGHT_PAREN')) {
+            do {
+                if (params.length >= 255) {
+                    this.error(this.peek(), 'Cannot have more than 255 parameters.');
+                }
+                params.push(this.consume('IDENTIFIER', 'Expect parameter name.'));
+            } while (this.match('COMMA'));
+        }
+        this.consume('RIGHT_PAREN', "Expect ')' after parameters.");
+        this.consume('LEFT_BRACE', "Expect '{' before " + kind + " body.");
+        var body = this.blockStatemnt();
+        return new Stmt_1.FunctionStmt(name, params, body.statements);
     };
     Parser.prototype.varDeclaration = function () {
         var name = this.consume('IDENTIFIER', "Expect variable name.");
@@ -68,6 +88,9 @@ var Parser = /** @class */ (function () {
         }
         if (this.match('LEFT_BRACE')) {
             return this.blockStatemnt();
+        }
+        if (this.match('RETURN')) {
+            return this.returnStatement();
         }
         return this.expressionStatement();
     };
@@ -137,6 +160,15 @@ var Parser = /** @class */ (function () {
         }
         this.consume('RIGHT_BRACE', "Expect '}' after block.");
         return new Stmt_1.BlockStmt(statements);
+    };
+    Parser.prototype.returnStatement = function () {
+        var keyword = this.previous();
+        var value = undefined;
+        if (!this.check('SEMICOLON')) {
+            value = this.expression();
+        }
+        this.consume('SEMICOLON', "Expect ';' after return value.");
+        return new Stmt_1.ReturnStmt(keyword, value);
     };
     Parser.prototype.expressionStatement = function () {
         var expr = this.expression();

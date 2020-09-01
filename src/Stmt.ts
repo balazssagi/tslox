@@ -9,6 +9,8 @@ export interface StmtVisitor<T> {
     visitBlockStmt(stmt: BlockStmt): T
     visitIfStmt(stmt: IfStmt): T
     visitWhileStmt(stmt: WhileStmt): T
+    visitFunctionStmt(stmt: FunctionStmt): T
+    visitReturnStmt(stmt: ReturnStmt): T
 }
 
 export abstract class Stmt {
@@ -78,5 +80,25 @@ export class WhileStmt extends Stmt {
 
     accept<T>(visitor: StmtVisitor<T>) {
         return visitor.visitWhileStmt(this)
+    }
+}
+export class FunctionStmt extends Stmt {
+
+    constructor(public name: Token, public params: Token[], public body: Stmt[]) {
+        super()
+    }
+
+    accept<T>(visitor: StmtVisitor<T>) {
+        return visitor.visitFunctionStmt(this)
+    }
+}
+export class ReturnStmt extends Stmt {
+
+    constructor(public keyword: Token, public value?: Expr) {
+        super()
+    }
+
+    accept<T>(visitor: StmtVisitor<T>) {
+        return visitor.visitReturnStmt(this)
     }
 }

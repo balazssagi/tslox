@@ -1,1 +1,13 @@
-print clock();
+fun makeCounter() {
+  var i = 0;
+  fun count(a) {
+    print a;
+    i = i + 1;
+    print i;
+  }
+
+  return count;
+}
+
+var counter = makeCounter();
+counter(5); // "1".
