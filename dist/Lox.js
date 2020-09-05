@@ -9,6 +9,7 @@ var readline_1 = __importDefault(require("readline"));
 var fs_1 = __importDefault(require("fs"));
 var Parser_1 = require("./Parser");
 var Interpreter_1 = require("./Interpreter");
+var Resolver_1 = require("./Resolver");
 var Lox = /** @class */ (function () {
     function Lox() {
     }
@@ -38,6 +39,8 @@ var Lox = /** @class */ (function () {
         var tokens = scanner.scanTokens();
         var parser = new Parser_1.Parser(tokens);
         var statements = parser.parse();
+        var resolver = new Resolver_1.Resolver(this.interpreter);
+        resolver.resolveStatements(statements);
         if (this.hadError) {
             return;
         }

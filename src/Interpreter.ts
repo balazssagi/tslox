@@ -12,6 +12,7 @@ export type Value = boolean | number | string | null | Callable
 export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     public globals = new Environment()
     private environment = this.globals
+    private locals = new Map<Expr, number>()
 
     constructor() {
         for (const [name, loxFunction] of Object.entries(globals)) {
@@ -72,7 +73,12 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     }
 
     visitVariableExpr(expr: VariableExpr): Value {
-        return this.environment.get(expr.name)
+        const value = this.lookUpVariable(expr.name, expr)
+        if (value === undefined) {
+            // ???
+            throw new RuntimeError(expr.name, 'ajaj')
+        }
+        return value
     }
 
     visitLiteralExpr(expr: LiteralExpr): Value {
@@ -184,7 +190,14 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     visitAssignExpr(expr: AssignExpr): Value {
         const value = this.evaulate(expr.value)
 
-        this.environment.assign(expr.name, value)
+        const distance = this.locals.get(expr)
+        if (distance !== undefined) {
+            this.environment.assignAt(distance, expr.name, value)
+        }
+        else {
+            this.globals.assign(expr.name, value)
+        }
+
         return value
     }
 
@@ -197,6 +210,18 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         catch(e) {
             Lox.runtimeError(e)
         }
+    }
+
+    resolve(expr: Expr, depth: number) {
+        this.locals.set(expr, depth)
+    }
+
+    lookUpVariable(name: Token, expr: Expr) {
+        const distance = this.locals.get(expr)
+        if (distance !== undefined) {
+            return this.environment.getAt(distance, name.lexeme)
+        }
+        return this.globals.get(name)
     }
 
     private stringify(value: Value) {

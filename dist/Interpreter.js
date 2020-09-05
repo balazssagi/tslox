@@ -23,6 +23,7 @@ var Interpreter = /** @class */ (function () {
     function Interpreter() {
         this.globals = new Environment_1.Environment();
         this.environment = this.globals;
+        this.locals = new Map();
         for (var _i = 0, _a = Object.entries(globals_1.globals); _i < _a.length; _i++) {
             var _b = _a[_i], name_1 = _b[0], loxFunction = _b[1];
             this.environment.define(name_1, loxFunction);
@@ -70,7 +71,12 @@ var Interpreter = /** @class */ (function () {
         this.executeBlock(stmt.statements, new Environment_1.Environment(this.environment));
     };
     Interpreter.prototype.visitVariableExpr = function (expr) {
-        return this.environment.get(expr.name);
+        var value = this.lookUpVariable(expr.name, expr);
+        if (value === undefined) {
+            // ???
+            throw new RuntimeError(expr.name, 'ajaj');
+        }
+        return value;
     };
     Interpreter.prototype.visitLiteralExpr = function (expr) {
         return expr.value;
@@ -167,7 +173,13 @@ var Interpreter = /** @class */ (function () {
     };
     Interpreter.prototype.visitAssignExpr = function (expr) {
         var value = this.evaulate(expr.value);
-        this.environment.assign(expr.name, value);
+        var distance = this.locals.get(expr);
+        if (distance !== undefined) {
+            this.environment.assignAt(distance, expr.name, value);
+        }
+        else {
+            this.globals.assign(expr.name, value);
+        }
         return value;
     };
     Interpreter.prototype.interpret = function (statements) {
@@ -180,6 +192,16 @@ var Interpreter = /** @class */ (function () {
         catch (e) {
             Lox_1.Lox.runtimeError(e);
         }
+    };
+    Interpreter.prototype.resolve = function (expr, depth) {
+        this.locals.set(expr, depth);
+    };
+    Interpreter.prototype.lookUpVariable = function (name, expr) {
+        var distance = this.locals.get(expr);
+        if (distance !== undefined) {
+            return this.environment.getAt(distance, name.lexeme);
+        }
+        return this.globals.get(name);
     };
     Interpreter.prototype.stringify = function (value) {
         if (value === null) {

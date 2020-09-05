@@ -30,6 +30,21 @@ var Environment = /** @class */ (function () {
         }
         throw new Interpreter_1.RuntimeError(name, "Undefined variable: " + name.lexeme + ".");
     };
+    Environment.prototype.getAt = function (distance, name) {
+        return this.ancestor(distance).values.get(name);
+    };
+    Environment.prototype.assignAt = function (distance, name, value) {
+        return this.ancestor(distance).values.set(name.lexeme, value);
+    };
+    Environment.prototype.ancestor = function (distance) {
+        var environment = this;
+        for (var i = 0; i < distance; i++) {
+            if (environment.enclosing) {
+                environment = environment.enclosing;
+            }
+        }
+        return environment;
+    };
     return Environment;
 }());
 exports.Environment = Environment;

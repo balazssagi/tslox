@@ -31,12 +31,12 @@ var LoxFunction = /** @class */ (function (_super) {
         return _this;
     }
     LoxFunction.prototype.call = function (interpreter, args) {
-        var environment = new Environment_1.Environment(interpreter.globals);
+        var environment = new Environment_1.Environment(this.closure);
         for (var i = 0; i < this.declaration.params.length; i++) {
             environment.define(this.declaration.params[i].lexeme, args[i]);
         }
         try {
-            interpreter.executeBlock(this.declaration.body, this.closure);
+            interpreter.executeBlock(this.declaration.body, environment);
         }
         catch (e) {
             if (e instanceof Return_1.Return) {

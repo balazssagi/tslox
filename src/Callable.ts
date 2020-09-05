@@ -14,13 +14,13 @@ export class LoxFunction extends Callable {
     }
 
     call(interpreter: Interpreter, args: Value[]): Value {
-        const environment = new Environment(interpreter.globals)
+        const environment = new Environment(this.closure)
         for (let i = 0; i < this.declaration.params.length; i++) {
             environment.define(this.declaration.params[i].lexeme, args[i])
         }
         
         try {
-            interpreter.executeBlock(this.declaration.body, this.closure)
+            interpreter.executeBlock(this.declaration.body, environment)
         }
         catch(e) {
             if (e instanceof Return) {
