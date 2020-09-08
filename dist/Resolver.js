@@ -6,6 +6,7 @@ var Resolver = /** @class */ (function () {
     function Resolver(interpreter) {
         this.interpreter = interpreter;
         this.scopes = [];
+        this.currentFunction = 'none';
     }
     Resolver.prototype.visitBlockStmt = function (stmt) {
         this.beginScope();
@@ -32,7 +33,7 @@ var Resolver = /** @class */ (function () {
     Resolver.prototype.visitFunctionStmt = function (stmt) {
         this.declare(stmt.name);
         this.define(stmt.name);
-        this.resolveFunction(stmt);
+        this.resolveFunction(stmt, 'function');
     };
     Resolver.prototype.visitExpressionStmt = function (stmt) {
         this.resolveExpression(stmt.expression);
@@ -48,6 +49,9 @@ var Resolver = /** @class */ (function () {
         this.resolveExpression(stmt.expression);
     };
     Resolver.prototype.visitReturnStmt = function (stmt) {
+        if (this.currentFunction === 'none') {
+            Lox_1.Lox.error(stmt.keyword.line, "Cannot return from top-level code.");
+        }
         if (stmt.value !== undefined) {
             this.resolveExpression(stmt.value);
         }
@@ -79,7 +83,9 @@ var Resolver = /** @class */ (function () {
     Resolver.prototype.visitUnaryExpr = function (expr) {
         this.resolveExpression(expr.right);
     };
-    Resolver.prototype.resolveFunction = function (stmt) {
+    Resolver.prototype.resolveFunction = function (stmt, type) {
+        var enclosingFunction = this.currentFunction;
+        this.currentFunction = type;
         this.beginScope();
         for (var _i = 0, _a = stmt.params; _i < _a.length; _i++) {
             var param = _a[_i];
@@ -88,6 +94,7 @@ var Resolver = /** @class */ (function () {
         }
         this.resolveStatements(stmt.body);
         this.endScope();
+        this.currentFunction = enclosingFunction;
     };
     Resolver.prototype.resolveStatements = function (stmts) {
         for (var _i = 0, stmts_1 = stmts; _i < stmts_1.length; _i++) {
@@ -100,6 +107,9 @@ var Resolver = /** @class */ (function () {
             return;
         }
         var scope = this.scopes[this.scopes.length - 1];
+        if (scope.has(name.lexeme)) {
+            Lox_1.Lox.error(name.line, "Variable with this name already declared in this scope.");
+        }
         scope.set(name.lexeme, false);
     };
     Resolver.prototype.define = function (name) {

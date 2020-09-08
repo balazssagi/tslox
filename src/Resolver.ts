@@ -4,8 +4,11 @@ import { Lox } from "./Lox";
 import { BlockStmt, FunctionStmt, Stmt, StmtVisitor, VarStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt } from "./Stmt";
 import { Token } from "./Token";
 
+type FunctionType = 'none' | 'function'
+
 export class Resolver implements StmtVisitor<void>, ExprVisitor<void> {
     private scopes: Map<string, boolean>[] = []
+    private currentFunction: FunctionType = 'none'
     
     constructor(private interpreter: Interpreter) {}
     
@@ -40,7 +43,7 @@ export class Resolver implements StmtVisitor<void>, ExprVisitor<void> {
         this.declare(stmt.name)
         this.define(stmt.name)
 
-        this.resolveFunction(stmt)
+        this.resolveFunction(stmt, 'function')
     }
 
     visitExpressionStmt(stmt: ExpressionStmt) {
@@ -60,6 +63,9 @@ export class Resolver implements StmtVisitor<void>, ExprVisitor<void> {
     }
 
     visitReturnStmt(stmt: ReturnStmt) {
+        if (this.currentFunction === 'none') {
+            Lox.error(stmt.keyword.line, "Cannot return from top-level code.")
+        }
         if (stmt.value !== undefined) {
             this.resolveExpression(stmt.value)
         }
@@ -100,7 +106,10 @@ export class Resolver implements StmtVisitor<void>, ExprVisitor<void> {
         this.resolveExpression(expr.right)
     }
 
-    private resolveFunction(stmt: FunctionStmt) {
+    private resolveFunction(stmt: FunctionStmt, type: FunctionType) {
+        const enclosingFunction = this.currentFunction
+        this.currentFunction = type
+        
         this.beginScope()
         for (const param of stmt.params) {
             this.declare(param)
@@ -108,6 +117,7 @@ export class Resolver implements StmtVisitor<void>, ExprVisitor<void> {
         }
         this.resolveStatements(stmt.body)
         this.endScope()
+        this.currentFunction = enclosingFunction
     }
 
     public resolveStatements(stmts: Stmt[]) {
@@ -121,6 +131,9 @@ export class Resolver implements StmtVisitor<void>, ExprVisitor<void> {
             return
         }
         const scope = this.scopes[this.scopes.length - 1]
+        if (scope.has(name.lexeme)) {
+            Lox.error(name.line, "Variable with this name already declared in this scope.")
+        }
         scope.set(name.lexeme, false)
     }
 

@@ -39,6 +39,9 @@ var Lox = /** @class */ (function () {
         var tokens = scanner.scanTokens();
         var parser = new Parser_1.Parser(tokens);
         var statements = parser.parse();
+        if (this.hadError) {
+            return;
+        }
         var resolver = new Resolver_1.Resolver(this.interpreter);
         resolver.resolveStatements(statements);
         if (this.hadError) {
