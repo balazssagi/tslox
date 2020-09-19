@@ -1,13 +1,14 @@
 import { Environment } from "./Environment";
-import { AssignExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr";
+import { AssignExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, ThisExpr, UnaryExpr, VariableExpr } from "./Expr";
 import { Lox } from "./Lox";
-import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "./Stmt";
+import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "./Stmt";
 import { Token } from "./Token";
-import { Callable, LoxFunction } from './Callable'
+import { Callable, LoxFunction, LoxClass } from './Callable'
 import { globals } from "./globals";
 import { Return } from "./Return";
+import { LoxInstance } from "./LoxInstance";
 
-export type Value = boolean | number | string | null | Callable
+export type Value = boolean | number | string | null | Callable | LoxInstance
 
 export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     public globals = new Environment()
@@ -21,7 +22,7 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     }
 
     visitFunctionStmt(stmt: FunctionStmt) {
-        const fn = new LoxFunction(stmt, this.environment)
+        const fn = new LoxFunction(stmt, this.environment, false)
         this.environment.define(stmt.name.lexeme, fn)
     }
 
@@ -31,6 +32,19 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
             value = this.evaulate(stmt.initializer)
         }
         this.environment.define(stmt.name.lexeme, value)
+    }
+
+    visitClassStmt(stmt: ClassStmt) {
+        this.environment.define(stmt.name.lexeme, null)
+
+        const methods = new Map<string, LoxFunction>()
+        for (const method of stmt.methods) {
+             const fn = new LoxFunction(method, this.environment, method.name.lexeme === 'init')
+             methods.set(method.name.lexeme, fn)
+        }
+
+        const loxClass = new LoxClass(stmt.name.lexeme, methods)
+        this.environment.assign(stmt.name, loxClass)
     }
 
     visitExpressionStmt(stmt: ExpressionStmt) {
@@ -76,7 +90,7 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         const value = this.lookUpVariable(expr.name, expr)
         if (value === undefined) {
             // ???
-            throw new RuntimeError(expr.name, 'ajaj')
+            throw new RuntimeError(expr.name, `Failed to find variable: ${expr.name.lexeme}`)
         }
         return value
     }
@@ -105,6 +119,34 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         }
 
         return callee.call(this, args)     
+    }
+
+    visitGetExpr(expr: GetExpr): Value {
+        const object = this.evaulate(expr.object)
+        if (object instanceof LoxInstance) {
+            return object.get(expr.name)
+        }
+        throw new RuntimeError(expr.name, "Only instances have properties.")
+    }
+
+    visitSetExpr(expr: SetExpr): Value {
+        const object = this.evaulate(expr.object)
+        if (!(object instanceof LoxInstance)) {
+            throw new RuntimeError(expr.name, "Only instances have properties.")
+        }
+
+        const value = this.evaulate(expr.value)
+        object.set(expr.name, value)
+        return value
+    }
+
+    visitThisExpr(expr: ThisExpr): Value {
+        const value = this.lookUpVariable(expr.keyword, expr)
+        if (value === undefined) {
+            // ???
+            throw new RuntimeError(expr.keyword, 'ajaj')
+        }
+        return value
     }
 
     visitBinaryExpr(expr: BinaryExpr): Value {

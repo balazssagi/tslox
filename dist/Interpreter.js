@@ -19,6 +19,7 @@ var Lox_1 = require("./Lox");
 var Callable_1 = require("./Callable");
 var globals_1 = require("./globals");
 var Return_1 = require("./Return");
+var LoxInstance_1 = require("./LoxInstance");
 var Interpreter = /** @class */ (function () {
     function Interpreter() {
         this.globals = new Environment_1.Environment();
@@ -30,7 +31,7 @@ var Interpreter = /** @class */ (function () {
         }
     }
     Interpreter.prototype.visitFunctionStmt = function (stmt) {
-        var fn = new Callable_1.LoxFunction(stmt, this.environment);
+        var fn = new Callable_1.LoxFunction(stmt, this.environment, false);
         this.environment.define(stmt.name.lexeme, fn);
     };
     Interpreter.prototype.visitVarStmt = function (stmt) {
@@ -39,6 +40,17 @@ var Interpreter = /** @class */ (function () {
             value = this.evaulate(stmt.initializer);
         }
         this.environment.define(stmt.name.lexeme, value);
+    };
+    Interpreter.prototype.visitClassStmt = function (stmt) {
+        this.environment.define(stmt.name.lexeme, null);
+        var methods = new Map();
+        for (var _i = 0, _a = stmt.methods; _i < _a.length; _i++) {
+            var method = _a[_i];
+            var fn = new Callable_1.LoxFunction(method, this.environment, method.name.lexeme === 'init');
+            methods.set(method.name.lexeme, fn);
+        }
+        var loxClass = new Callable_1.LoxClass(stmt.name.lexeme, methods);
+        this.environment.assign(stmt.name, loxClass);
     };
     Interpreter.prototype.visitExpressionStmt = function (stmt) {
         this.evaulate(stmt.expression);
@@ -74,7 +86,7 @@ var Interpreter = /** @class */ (function () {
         var value = this.lookUpVariable(expr.name, expr);
         if (value === undefined) {
             // ???
-            throw new RuntimeError(expr.name, 'ajaj');
+            throw new RuntimeError(expr.name, "Failed to find variable: " + expr.name.lexeme);
         }
         return value;
     };
@@ -95,6 +107,30 @@ var Interpreter = /** @class */ (function () {
             throw new RuntimeError(expr.token, "Expected " + callee.arity() + " arguments but got " + args.length + ".");
         }
         return callee.call(this, args);
+    };
+    Interpreter.prototype.visitGetExpr = function (expr) {
+        var object = this.evaulate(expr.object);
+        if (object instanceof LoxInstance_1.LoxInstance) {
+            return object.get(expr.name);
+        }
+        throw new RuntimeError(expr.name, "Only instances have properties.");
+    };
+    Interpreter.prototype.visitSetExpr = function (expr) {
+        var object = this.evaulate(expr.object);
+        if (!(object instanceof LoxInstance_1.LoxInstance)) {
+            throw new RuntimeError(expr.name, "Only instances have properties.");
+        }
+        var value = this.evaulate(expr.value);
+        object.set(expr.name, value);
+        return value;
+    };
+    Interpreter.prototype.visitThisExpr = function (expr) {
+        var value = this.lookUpVariable(expr.keyword, expr);
+        if (value === undefined) {
+            // ???
+            throw new RuntimeError(expr.keyword, 'ajaj');
+        }
+        return value;
     };
     Interpreter.prototype.visitBinaryExpr = function (expr) {
         var left = this.evaulate(expr.left);

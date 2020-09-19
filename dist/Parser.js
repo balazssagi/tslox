@@ -34,6 +34,9 @@ var Parser = /** @class */ (function () {
     };
     Parser.prototype.declaration = function () {
         try {
+            if (this.match('CLASS')) {
+                return this.classDeclaration();
+            }
             if (this.match('FUN')) {
                 return this.function('function');
             }
@@ -63,6 +66,16 @@ var Parser = /** @class */ (function () {
         this.consume('LEFT_BRACE', "Expect '{' before " + kind + " body.");
         var body = this.blockStatemnt();
         return new Stmt_1.FunctionStmt(name, params, body.statements);
+    };
+    Parser.prototype.classDeclaration = function () {
+        var name = this.consume('IDENTIFIER', 'Expect class name.');
+        this.consume('LEFT_BRACE', "Expect '{' before class body.");
+        var methods = [];
+        while (!this.check('RIGHT_BRACE') && !this.isAtEnd()) {
+            methods.push(this.function('method'));
+        }
+        this.consume('RIGHT_BRACE', "Expect '}' after class body.");
+        return new Stmt_1.ClassStmt(name, methods);
     };
     Parser.prototype.varDeclaration = function () {
         var name = this.consume('IDENTIFIER', "Expect variable name.");
@@ -187,6 +200,9 @@ var Parser = /** @class */ (function () {
                 var name_1 = expr.name;
                 return new Expr_1.AssignExpr(name_1, value);
             }
+            else if (expr instanceof Expr_1.GetExpr) {
+                return new Expr_1.SetExpr(expr.object, expr.name, value);
+            }
             this.error(equals, 'Invalid left-hand side in assignment.');
         }
         return expr;
@@ -255,8 +271,17 @@ var Parser = /** @class */ (function () {
     };
     Parser.prototype.call = function () {
         var expr = this.primary();
-        while (this.match('LEFT_PAREN')) {
-            expr = this.finishCall(expr);
+        while (true) {
+            if (this.match('LEFT_PAREN')) {
+                expr = this.finishCall(expr);
+            }
+            else if (this.match('DOT')) {
+                var name_2 = this.consume('IDENTIFIER', "Expect property name after '.'.");
+                expr = new Expr_1.GetExpr(expr, name_2);
+            }
+            else {
+                break;
+            }
         }
         return expr;
     };
@@ -274,6 +299,9 @@ var Parser = /** @class */ (function () {
             var expr = this.expression();
             this.consume('RIGHT_PAREN', "Expect ')' after expression.");
             return new Expr_1.GroupingExpr(expr);
+        }
+        if (this.match('THIS')) {
+            return new Expr_1.ThisExpr(this.previous());
         }
         if (this.match('IDENTIFIER')) {
             return new Expr_1.VariableExpr(this.previous());

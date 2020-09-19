@@ -1,15 +1,17 @@
 import { Environment } from "./Environment";
 import { Interpreter, Value } from "./Interpreter";
+import { LoxInstance } from "./LoxInstance";
 import { Return } from "./Return";
 import { FunctionStmt } from "./Stmt";
 
 export abstract class Callable {
-    abstract call(interpreter: Interpreter, args: Value[]): Value
+    // types ???
+    abstract call(interpreter: Interpreter, args: Value[]): any
     abstract arity(): number
 }
 
 export class LoxFunction extends Callable {
-    constructor(private declaration: FunctionStmt, private closure: Environment) {
+    constructor(private declaration: FunctionStmt, private closure: Environment, private isInitiazlier: boolean) {
         super()
     }
 
@@ -24,15 +26,27 @@ export class LoxFunction extends Callable {
         }
         catch(e) {
             if (e instanceof Return) {
+                if (this.isInitiazlier) {
+                    return this.closure.getAt(0, "this")!
+                }
                 return e.value
             }
             throw(e)
+        }
+        if (this.isInitiazlier) {
+            return this.closure.getAt(0, "this")!
         }
         return null
     }
 
     arity() {
         return this.declaration.params.length
+    }
+
+    bind(instance: LoxInstance) {
+        const envivornment = new Environment()
+        envivornment.define('this', instance)
+        return new LoxFunction(this.declaration, envivornment, this.isInitiazlier)
     }
 
     toString() {
@@ -55,5 +69,38 @@ export class NativeFunction extends Callable {
 
     toString() {
         return '<native fn>'
+    }
+}
+
+export class LoxClass extends Callable {
+    constructor(private name: string, private methods: Map<string, LoxFunction>) {
+        super()
+    }
+
+    call(interpreter: Interpreter, args: Value[]) {
+        const instance = new LoxInstance(this)
+
+        const initializer = this.findMethod('init')
+        if (initializer !== undefined) {
+            initializer.bind(instance).call(interpreter, args)
+        }
+
+        return instance
+    }
+
+    arity() {
+        const initializer = this.findMethod('init')
+        if (initializer !== undefined) {
+            return initializer.arity()
+        }
+        return 0
+    }
+
+    findMethod(name: string) {
+        return this.methods.get(name)
+    }
+
+    toString() {
+        return this.name
     }
 }

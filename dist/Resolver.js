@@ -7,6 +7,7 @@ var Resolver = /** @class */ (function () {
         this.interpreter = interpreter;
         this.scopes = [];
         this.currentFunction = 'none';
+        this.currentClass = 'none';
     }
     Resolver.prototype.visitBlockStmt = function (stmt) {
         this.beginScope();
@@ -19,6 +20,24 @@ var Resolver = /** @class */ (function () {
             this.resolveExpression(stmt.initializer);
         }
         this.define(stmt.name);
+    };
+    Resolver.prototype.visitClassStmt = function (stmt) {
+        var enclosingClassType = this.currentClass;
+        this.currentClass = 'class';
+        this.declare(stmt.name);
+        this.define(stmt.name);
+        this.beginScope();
+        this.scopes[this.scopes.length - 1].set('this', true);
+        for (var _i = 0, _a = stmt.methods; _i < _a.length; _i++) {
+            var method = _a[_i];
+            var declaration = 'method';
+            if (method.name.lexeme === 'init') {
+                declaration = 'initializer';
+            }
+            this.resolveFunction(method, declaration);
+        }
+        this.endScope();
+        this.currentClass = enclosingClassType;
     };
     Resolver.prototype.visitVariableExpr = function (expr) {
         if (this.scopes.length !== 0 && this.scopes[this.scopes.length - 1].get(expr.name.lexeme) === false) {
@@ -53,6 +72,9 @@ var Resolver = /** @class */ (function () {
             Lox_1.Lox.error(stmt.keyword.line, "Cannot return from top-level code.");
         }
         if (stmt.value !== undefined) {
+            if (this.currentFunction === 'initializer') {
+                Lox_1.Lox.error(stmt.keyword.line, "Cannot return a value from an initializer.");
+            }
             this.resolveExpression(stmt.value);
         }
     };
@@ -70,6 +92,19 @@ var Resolver = /** @class */ (function () {
             var arg = _a[_i];
             this.resolveExpression(arg);
         }
+    };
+    Resolver.prototype.visitGetExpr = function (expr) {
+        this.resolveExpression(expr.object);
+    };
+    Resolver.prototype.visitSetExpr = function (expr) {
+        this.resolveExpression(expr.value);
+        this.resolveExpression(expr.object);
+    };
+    Resolver.prototype.visitThisExpr = function (expr) {
+        if (this.currentClass === 'none') {
+            Lox_1.Lox.error(expr.keyword.line, "Cannot use 'this' outside of a class.");
+        }
+        this.resolveLocal(expr, expr.keyword);
     };
     Resolver.prototype.visitGroupingExpr = function (expr) {
         this.resolveExpression(expr.expression);

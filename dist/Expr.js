@@ -13,7 +13,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CallExpr = exports.LogicalExpr = exports.AssignExpr = exports.VariableExpr = exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.UnaryExpr = exports.Expr = void 0;
+exports.ThisExpr = exports.SetExpr = exports.GetExpr = exports.CallExpr = exports.LogicalExpr = exports.AssignExpr = exports.VariableExpr = exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.UnaryExpr = exports.Expr = void 0;
 var Expr = /** @class */ (function () {
     function Expr() {
     }
@@ -132,3 +132,45 @@ var CallExpr = /** @class */ (function (_super) {
     return CallExpr;
 }(Expr));
 exports.CallExpr = CallExpr;
+var GetExpr = /** @class */ (function (_super) {
+    __extends(GetExpr, _super);
+    function GetExpr(object, name) {
+        var _this = _super.call(this) || this;
+        _this.object = object;
+        _this.name = name;
+        return _this;
+    }
+    GetExpr.prototype.accept = function (visitor) {
+        return visitor.visitGetExpr(this);
+    };
+    return GetExpr;
+}(Expr));
+exports.GetExpr = GetExpr;
+var SetExpr = /** @class */ (function (_super) {
+    __extends(SetExpr, _super);
+    function SetExpr(object, name, value) {
+        var _this = _super.call(this) || this;
+        _this.object = object;
+        _this.name = name;
+        _this.value = value;
+        return _this;
+    }
+    SetExpr.prototype.accept = function (visitor) {
+        return visitor.visitSetExpr(this);
+    };
+    return SetExpr;
+}(Expr));
+exports.SetExpr = SetExpr;
+var ThisExpr = /** @class */ (function (_super) {
+    __extends(ThisExpr, _super);
+    function ThisExpr(keyword) {
+        var _this = _super.call(this) || this;
+        _this.keyword = keyword;
+        return _this;
+    }
+    ThisExpr.prototype.accept = function (visitor) {
+        return visitor.visitThisExpr(this);
+    };
+    return ThisExpr;
+}(Expr));
+exports.ThisExpr = ThisExpr;

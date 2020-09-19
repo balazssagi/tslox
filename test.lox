@@ -1,4 +1,12 @@
-var a = "outer";
-{
-  var a = a;
+class Food {
+  init(name) {
+    this.name = name;
+  }
+
+  eat() {
+    print "Eating: " + this.name;
+  }
 }
+ 
+var bacon = Food("bacon");
+bacon.eat();

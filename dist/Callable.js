@@ -13,8 +13,9 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NativeFunction = exports.LoxFunction = exports.Callable = void 0;
+exports.LoxClass = exports.NativeFunction = exports.LoxFunction = exports.Callable = void 0;
 var Environment_1 = require("./Environment");
+var LoxInstance_1 = require("./LoxInstance");
 var Return_1 = require("./Return");
 var Callable = /** @class */ (function () {
     function Callable() {
@@ -24,10 +25,11 @@ var Callable = /** @class */ (function () {
 exports.Callable = Callable;
 var LoxFunction = /** @class */ (function (_super) {
     __extends(LoxFunction, _super);
-    function LoxFunction(declaration, closure) {
+    function LoxFunction(declaration, closure, isInitiazlier) {
         var _this = _super.call(this) || this;
         _this.declaration = declaration;
         _this.closure = closure;
+        _this.isInitiazlier = isInitiazlier;
         return _this;
     }
     LoxFunction.prototype.call = function (interpreter, args) {
@@ -40,14 +42,25 @@ var LoxFunction = /** @class */ (function (_super) {
         }
         catch (e) {
             if (e instanceof Return_1.Return) {
+                if (this.isInitiazlier) {
+                    return this.closure.getAt(0, "this");
+                }
                 return e.value;
             }
             throw (e);
+        }
+        if (this.isInitiazlier) {
+            return this.closure.getAt(0, "this");
         }
         return null;
     };
     LoxFunction.prototype.arity = function () {
         return this.declaration.params.length;
+    };
+    LoxFunction.prototype.bind = function (instance) {
+        var envivornment = new Environment_1.Environment();
+        envivornment.define('this', instance);
+        return new LoxFunction(this.declaration, envivornment, this.isInitiazlier);
     };
     LoxFunction.prototype.toString = function () {
         return "fn <" + this.declaration.name.lexeme + ">";
@@ -75,3 +88,35 @@ var NativeFunction = /** @class */ (function (_super) {
     return NativeFunction;
 }(Callable));
 exports.NativeFunction = NativeFunction;
+var LoxClass = /** @class */ (function (_super) {
+    __extends(LoxClass, _super);
+    function LoxClass(name, methods) {
+        var _this = _super.call(this) || this;
+        _this.name = name;
+        _this.methods = methods;
+        return _this;
+    }
+    LoxClass.prototype.call = function (interpreter, args) {
+        var instance = new LoxInstance_1.LoxInstance(this);
+        var initializer = this.findMethod('init');
+        if (initializer !== undefined) {
+            initializer.bind(instance).call(interpreter, args);
+        }
+        return instance;
+    };
+    LoxClass.prototype.arity = function () {
+        var initializer = this.findMethod('init');
+        if (initializer !== undefined) {
+            return initializer.arity();
+        }
+        return 0;
+    };
+    LoxClass.prototype.findMethod = function (name) {
+        return this.methods.get(name);
+    };
+    LoxClass.prototype.toString = function () {
+        return this.name;
+    };
+    return LoxClass;
+}(Callable));
+exports.LoxClass = LoxClass;

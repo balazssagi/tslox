@@ -10,6 +10,9 @@ export interface ExprVisitor<T> {
     visitAssignExpr(expr: AssignExpr): T
     visitLogicalExpr(expr: LogicalExpr): T
     visitCallExpr(expr: CallExpr): T
+    visitGetExpr(expr: GetExpr): T
+    visitSetExpr(expr: SetExpr): T
+    visitThisExpr(expr: ThisExpr): T
 }
 
 export abstract class Expr {
@@ -86,5 +89,32 @@ export class CallExpr extends Expr {
     }
     accept<T>(visitor: ExprVisitor<T>) {
         return visitor.visitCallExpr(this)
+    }
+}
+
+export class GetExpr extends Expr {
+    constructor(public object: Expr, public name: Token) {
+        super()
+    }
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitGetExpr(this)
+    }
+}
+
+export class SetExpr extends Expr {
+    constructor(public object: Expr, public name: Token, public value: Expr) {
+        super()
+    }
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitSetExpr(this)
+    }
+}
+
+export class ThisExpr extends Expr {
+    constructor(public keyword: Token) {
+        super()
+    }
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitThisExpr(this)
     }
 }

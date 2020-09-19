@@ -1,6 +1,6 @@
-import { AssignExpr, BinaryExpr, CallExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "./Expr"
+import { AssignExpr, BinaryExpr, CallExpr, Expr, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, ThisExpr, UnaryExpr, VariableExpr } from "./Expr"
 import { Lox } from "./Lox"
-import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, VarStmt, WhileStmt } from "./Stmt"
+import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, VarStmt, WhileStmt } from "./Stmt"
 import { Token } from "./Token"
 import { TokenType } from "./TokenType"
 
@@ -23,6 +23,9 @@ export class Parser {
 
     private declaration() {
         try {
+            if (this.match('CLASS')) {
+                return this.classDeclaration()
+            }
             if (this.match('FUN')) {
                 return this.function('function')
             }
@@ -37,7 +40,7 @@ export class Parser {
         }
     }
     
-    private function(kind: 'function') {
+    private function(kind: 'function' | 'method') {
         const name = this.consume('IDENTIFIER', `Expect ${kind} name.`)
         
         this.consume('LEFT_PAREN', `Expect '(' after ${kind} name.`)
@@ -64,6 +67,20 @@ export class Parser {
         const body = this.blockStatemnt()
         
         return new FunctionStmt(name, params, body.statements)
+    }
+
+    private classDeclaration() {
+        const name = this.consume('IDENTIFIER', 'Expect class name.')
+        this.consume('LEFT_BRACE', "Expect '{' before class body.")
+
+        const methods: FunctionStmt[] = []
+        while (!this.check('RIGHT_BRACE') && !this.isAtEnd()) {
+            methods.push(this.function('method'))
+        }
+
+        this.consume('RIGHT_BRACE', "Expect '}' after class body.")
+        
+        return new ClassStmt(name, methods)
     }
 
     private varDeclaration() {
@@ -219,6 +236,9 @@ export class Parser {
                const name = expr.name
                return new AssignExpr(name, value)
             }
+            else if (expr instanceof GetExpr) {
+                return new SetExpr(expr.object, expr.name, value)
+            }
 
             this.error(equals, 'Invalid left-hand side in assignment.')
         }
@@ -310,8 +330,17 @@ export class Parser {
     private call() {
         let expr = this.primary()
 
-        while (this.match('LEFT_PAREN')) {
-            expr = this.finishCall(expr)
+        while (true) {
+            if (this.match('LEFT_PAREN')) {
+                expr = this.finishCall(expr)
+            }
+            else if (this.match('DOT')) {
+                const name = this.consume('IDENTIFIER', "Expect property name after '.'.")
+                expr = new GetExpr(expr, name)
+            }
+            else {
+                break;
+            }
         }
 
         return expr
@@ -330,6 +359,10 @@ export class Parser {
             const expr = this.expression()
             this.consume('RIGHT_PAREN', "Expect ')' after expression.")
             return new GroupingExpr(expr)
+        }
+
+        if (this.match('THIS')) {
+            return new ThisExpr(this.previous())
         }
 
         if (this.match('IDENTIFIER')) {
