@@ -69,13 +69,18 @@ var Parser = /** @class */ (function () {
     };
     Parser.prototype.classDeclaration = function () {
         var name = this.consume('IDENTIFIER', 'Expect class name.');
+        var superClass = undefined;
+        if (this.match('LESS')) {
+            this.consume('IDENTIFIER', 'Expect superclass name.');
+            superClass = new Expr_1.VariableExpr(this.previous());
+        }
         this.consume('LEFT_BRACE', "Expect '{' before class body.");
         var methods = [];
         while (!this.check('RIGHT_BRACE') && !this.isAtEnd()) {
             methods.push(this.function('method'));
         }
         this.consume('RIGHT_BRACE', "Expect '}' after class body.");
-        return new Stmt_1.ClassStmt(name, methods);
+        return new Stmt_1.ClassStmt(name, superClass, methods);
     };
     Parser.prototype.varDeclaration = function () {
         var name = this.consume('IDENTIFIER', "Expect variable name.");
@@ -294,6 +299,12 @@ var Parser = /** @class */ (function () {
             return new Expr_1.LiteralExpr(null);
         if (this.match('NUMBER', 'STRING')) {
             return new Expr_1.LiteralExpr(this.previous().literal);
+        }
+        if (this.match('SUPER')) {
+            var keyword = this.previous();
+            this.consume('DOT', "Expect '.' after 'super'.");
+            this.consume('IDENTIFIER', "Expect superclass method name.");
+            return new Expr_1.SuperExpr(keyword, this.previous());
         }
         if (this.match('LEFT_PAREN')) {
             var expr = this.expression();

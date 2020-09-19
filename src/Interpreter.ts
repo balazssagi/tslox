@@ -1,5 +1,5 @@
 import { Environment } from "./Environment";
-import { AssignExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, ThisExpr, UnaryExpr, VariableExpr } from "./Expr";
+import { AssignExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, SuperExpr, ThisExpr, UnaryExpr, VariableExpr } from "./Expr";
 import { Lox } from "./Lox";
 import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "./Stmt";
 import { Token } from "./Token";
@@ -35,7 +35,21 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     }
 
     visitClassStmt(stmt: ClassStmt) {
+        let superclass: undefined | LoxClass
+        if (stmt.superclass !== undefined) {
+            const value = this.evaulate(stmt.superclass)
+            if (!(value instanceof LoxClass)) {
+                throw new RuntimeError(stmt.superclass.name, "Superclass must be a class.");
+            }
+            superclass = value
+        }
+
         this.environment.define(stmt.name.lexeme, null)
+
+        if (superclass !== undefined) {
+            this.environment = new Environment(this.environment)
+            this.environment.define("super", superclass)
+        }
 
         const methods = new Map<string, LoxFunction>()
         for (const method of stmt.methods) {
@@ -43,7 +57,12 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
              methods.set(method.name.lexeme, fn)
         }
 
-        const loxClass = new LoxClass(stmt.name.lexeme, methods)
+        const loxClass = new LoxClass(stmt.name.lexeme, superclass, methods)
+
+        if (superclass !== undefined) {
+            this.environment = this.environment.enclosing!
+        }
+
         this.environment.assign(stmt.name, loxClass)
     }
 
@@ -52,7 +71,6 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     }
 
     visitPrintStmt(stmt: PrintStmt) {
-        
         const value = this.evaulate(stmt.expression)
         console.log(this.stringify(value))
     }
@@ -144,9 +162,22 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         const value = this.lookUpVariable(expr.keyword, expr)
         if (value === undefined) {
             // ???
-            throw new RuntimeError(expr.keyword, 'ajaj')
+            throw new RuntimeError(expr.keyword, '')
         }
         return value
+    }
+
+    visitSuperExpr(expr: SuperExpr): Value {
+        const distance = this.locals.get(expr)!
+        const superclass = this.environment.getAt(distance, "super") as LoxClass
+        const object = this.environment.getAt(distance - 1, "this") as LoxInstance
+        const method = superclass.findMethod(expr.method.lexeme)
+
+        if (method === undefined) {
+            throw new RuntimeError(expr.keyword, `Undefined property '${expr.method.lexeme}'.`)
+        }
+
+        return method.bind(object)
     }
 
     visitBinaryExpr(expr: BinaryExpr): Value {
@@ -250,7 +281,10 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
             }
         }
         catch(e) {
-            Lox.runtimeError(e)
+            if (e instanceof RuntimeError) {
+                Lox.runtimeError(e)
+            }
+            console.error(e)
         }
     }
 

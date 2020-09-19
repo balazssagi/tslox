@@ -4,7 +4,7 @@ import { Token } from './Token'
 export class Environment {
     private values = new Map<string, Value>()
     
-    constructor(private enclosing?: Environment) {}
+    constructor(public enclosing?: Environment) {}
 
     public define(name: string, value: Value) {
         this.values.set(name, value)

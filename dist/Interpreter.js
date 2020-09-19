@@ -42,14 +42,29 @@ var Interpreter = /** @class */ (function () {
         this.environment.define(stmt.name.lexeme, value);
     };
     Interpreter.prototype.visitClassStmt = function (stmt) {
+        var superclass;
+        if (stmt.superclass !== undefined) {
+            var value = this.evaulate(stmt.superclass);
+            if (!(value instanceof Callable_1.LoxClass)) {
+                throw new RuntimeError(stmt.superclass.name, "Superclass must be a class.");
+            }
+            superclass = value;
+        }
         this.environment.define(stmt.name.lexeme, null);
+        if (superclass !== undefined) {
+            this.environment = new Environment_1.Environment(this.environment);
+            this.environment.define("super", superclass);
+        }
         var methods = new Map();
         for (var _i = 0, _a = stmt.methods; _i < _a.length; _i++) {
             var method = _a[_i];
             var fn = new Callable_1.LoxFunction(method, this.environment, method.name.lexeme === 'init');
             methods.set(method.name.lexeme, fn);
         }
-        var loxClass = new Callable_1.LoxClass(stmt.name.lexeme, methods);
+        var loxClass = new Callable_1.LoxClass(stmt.name.lexeme, superclass, methods);
+        if (superclass !== undefined) {
+            this.environment = this.environment.enclosing;
+        }
         this.environment.assign(stmt.name, loxClass);
     };
     Interpreter.prototype.visitExpressionStmt = function (stmt) {
@@ -128,9 +143,19 @@ var Interpreter = /** @class */ (function () {
         var value = this.lookUpVariable(expr.keyword, expr);
         if (value === undefined) {
             // ???
-            throw new RuntimeError(expr.keyword, 'ajaj');
+            throw new RuntimeError(expr.keyword, '');
         }
         return value;
+    };
+    Interpreter.prototype.visitSuperExpr = function (expr) {
+        var distance = this.locals.get(expr);
+        var superclass = this.environment.getAt(distance, "super");
+        var object = this.environment.getAt(distance - 1, "this");
+        var method = superclass.findMethod(expr.method.lexeme);
+        if (method === undefined) {
+            throw new RuntimeError(expr.keyword, "Undefined property '" + expr.method.lexeme + "'.");
+        }
+        return method.bind(object);
     };
     Interpreter.prototype.visitBinaryExpr = function (expr) {
         var left = this.evaulate(expr.left);
@@ -226,7 +251,10 @@ var Interpreter = /** @class */ (function () {
             }
         }
         catch (e) {
-            Lox_1.Lox.runtimeError(e);
+            if (e instanceof RuntimeError) {
+                Lox_1.Lox.runtimeError(e);
+            }
+            console.error(e);
         }
     };
     Interpreter.prototype.resolve = function (expr, depth) {

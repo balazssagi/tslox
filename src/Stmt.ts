@@ -1,5 +1,5 @@
 import { WhileStatement } from "typescript"
-import { Expr } from "./Expr"
+import { Expr, VariableExpr } from "./Expr"
 import { Token } from "./Token"
 
 export interface StmtVisitor<T> {
@@ -53,7 +53,7 @@ export class VarStmt extends Stmt {
 
 export class ClassStmt extends Stmt {
 
-    constructor(public name: Token, public methods: FunctionStmt[]) {
+    constructor(public name: Token, public superclass: VariableExpr | undefined, public methods: FunctionStmt[]) {
         super()
     }
 

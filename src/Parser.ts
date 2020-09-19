@@ -1,4 +1,5 @@
-import { AssignExpr, BinaryExpr, CallExpr, Expr, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, ThisExpr, UnaryExpr, VariableExpr } from "./Expr"
+import { Identifier } from "typescript"
+import { AssignExpr, BinaryExpr, CallExpr, Expr, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, SuperExpr, ThisExpr, UnaryExpr, VariableExpr } from "./Expr"
 import { Lox } from "./Lox"
 import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, VarStmt, WhileStmt } from "./Stmt"
 import { Token } from "./Token"
@@ -71,6 +72,13 @@ export class Parser {
 
     private classDeclaration() {
         const name = this.consume('IDENTIFIER', 'Expect class name.')
+        let superClass: VariableExpr | undefined = undefined
+
+        if (this.match('LESS')) {
+            this.consume('IDENTIFIER', 'Expect superclass name.')
+            superClass = new VariableExpr(this.previous())
+        }
+
         this.consume('LEFT_BRACE', "Expect '{' before class body.")
 
         const methods: FunctionStmt[] = []
@@ -80,7 +88,7 @@ export class Parser {
 
         this.consume('RIGHT_BRACE', "Expect '}' after class body.")
         
-        return new ClassStmt(name, methods)
+        return new ClassStmt(name, superClass, methods)
     }
 
     private varDeclaration() {
@@ -353,6 +361,13 @@ export class Parser {
 
         if (this.match('NUMBER', 'STRING')) {
             return new LiteralExpr(this.previous().literal)
+        }
+
+        if (this.match('SUPER')) {
+            const keyword = this.previous()
+            this.consume('DOT', "Expect '.' after 'super'.")
+            this.consume('IDENTIFIER', "Expect superclass method name.")
+            return new SuperExpr(keyword, this.previous())
         }
 
         if (this.match('LEFT_PAREN')) {

@@ -62,9 +62,10 @@ var VarStmt = /** @class */ (function (_super) {
 exports.VarStmt = VarStmt;
 var ClassStmt = /** @class */ (function (_super) {
     __extends(ClassStmt, _super);
-    function ClassStmt(name, methods) {
+    function ClassStmt(name, superclass, methods) {
         var _this = _super.call(this) || this;
         _this.name = name;
+        _this.superclass = superclass;
         _this.methods = methods;
         return _this;
     }

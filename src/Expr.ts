@@ -13,6 +13,7 @@ export interface ExprVisitor<T> {
     visitGetExpr(expr: GetExpr): T
     visitSetExpr(expr: SetExpr): T
     visitThisExpr(expr: ThisExpr): T
+    visitSuperExpr(expr: SuperExpr): T
 }
 
 export abstract class Expr {
@@ -116,5 +117,14 @@ export class ThisExpr extends Expr {
     }
     accept<T>(visitor: ExprVisitor<T>) {
         return visitor.visitThisExpr(this)
+    }
+}
+
+export class SuperExpr extends Expr {
+    constructor(public keyword: Token, public method: Token) {
+        super()
+    }
+    accept<T>(visitor: ExprVisitor<T>) {
+        return visitor.visitSuperExpr(this)
     }
 }

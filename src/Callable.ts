@@ -1,3 +1,4 @@
+import { inherits } from "util";
 import { Environment } from "./Environment";
 import { Interpreter, Value } from "./Interpreter";
 import { LoxInstance } from "./LoxInstance";
@@ -14,7 +15,7 @@ export class LoxFunction extends Callable {
     constructor(private declaration: FunctionStmt, private closure: Environment, private isInitiazlier: boolean) {
         super()
     }
-
+    
     call(interpreter: Interpreter, args: Value[]): Value {
         const environment = new Environment(this.closure)
         for (let i = 0; i < this.declaration.params.length; i++) {
@@ -44,7 +45,7 @@ export class LoxFunction extends Callable {
     }
 
     bind(instance: LoxInstance) {
-        const envivornment = new Environment()
+        const envivornment = new Environment(this.closure)
         envivornment.define('this', instance)
         return new LoxFunction(this.declaration, envivornment, this.isInitiazlier)
     }
@@ -73,7 +74,7 @@ export class NativeFunction extends Callable {
 }
 
 export class LoxClass extends Callable {
-    constructor(private name: string, private methods: Map<string, LoxFunction>) {
+    constructor(private name: string, private superClass: LoxClass | undefined, private methods: Map<string, LoxFunction>) {
         super()
     }
 
@@ -96,8 +97,11 @@ export class LoxClass extends Callable {
         return 0
     }
 
-    findMethod(name: string) {
-        return this.methods.get(name)
+    findMethod(name: string): LoxFunction | undefined {
+        if (this.methods.has(name)) {
+            return this.methods.get(name)
+        }
+        return this.superClass?.findMethod(name)
     }
 
     toString() {

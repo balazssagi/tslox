@@ -58,7 +58,7 @@ var LoxFunction = /** @class */ (function (_super) {
         return this.declaration.params.length;
     };
     LoxFunction.prototype.bind = function (instance) {
-        var envivornment = new Environment_1.Environment();
+        var envivornment = new Environment_1.Environment(this.closure);
         envivornment.define('this', instance);
         return new LoxFunction(this.declaration, envivornment, this.isInitiazlier);
     };
@@ -90,9 +90,10 @@ var NativeFunction = /** @class */ (function (_super) {
 exports.NativeFunction = NativeFunction;
 var LoxClass = /** @class */ (function (_super) {
     __extends(LoxClass, _super);
-    function LoxClass(name, methods) {
+    function LoxClass(name, superClass, methods) {
         var _this = _super.call(this) || this;
         _this.name = name;
+        _this.superClass = superClass;
         _this.methods = methods;
         return _this;
     }
@@ -112,7 +113,11 @@ var LoxClass = /** @class */ (function (_super) {
         return 0;
     };
     LoxClass.prototype.findMethod = function (name) {
-        return this.methods.get(name);
+        var _a;
+        if (this.methods.has(name)) {
+            return this.methods.get(name);
+        }
+        return (_a = this.superClass) === null || _a === void 0 ? void 0 : _a.findMethod(name);
     };
     LoxClass.prototype.toString = function () {
         return this.name;
