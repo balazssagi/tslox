@@ -18,7 +18,7 @@ var Lox = /** @class */ (function () {
             _this.errorReporter({
                 line: error.token.line,
                 message: error.message,
-                formattedMessage: "[line " + error.token.line + "] Error: " + error.message
+                formattedMessage: "[line " + error.token.line + "] Runtime Error: " + error.message
             });
         };
         this.reportError = function (line, message) {
