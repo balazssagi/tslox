@@ -1,0 +1,50 @@
+import { Environment } from "./Environment";
+import { AssignExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, SuperExpr, ThisExpr, UnaryExpr, VariableExpr } from "./Expr";
+import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "./Stmt";
+import { Token } from "./Token";
+import { Callable } from './Callable';
+import { LoxInstance } from "./LoxInstance";
+export declare type Value = boolean | number | string | null | Callable | LoxInstance;
+export declare class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
+    private stdout;
+    private reportRuntimeError;
+    globals: Environment;
+    private environment;
+    private locals;
+    constructor(stdout: (value: string) => void, reportRuntimeError: (e: RuntimeError) => void);
+    visitFunctionStmt(stmt: FunctionStmt): void;
+    visitVarStmt(stmt: VarStmt): void;
+    visitClassStmt(stmt: ClassStmt): void;
+    visitExpressionStmt(stmt: ExpressionStmt): void;
+    visitPrintStmt(stmt: PrintStmt): void;
+    visitIfStmt(stmt: IfStmt): void;
+    visitWhileStmt(stmt: WhileStmt): void;
+    visitReturnStmt(stmt: ReturnStmt): void;
+    visitBlockStmt(stmt: BlockStmt): void;
+    visitVariableExpr(expr: VariableExpr): Value;
+    visitLiteralExpr(expr: LiteralExpr): Value;
+    visitGroupingExpr(expr: GroupingExpr): Value;
+    visitCallExpr(expr: CallExpr): Value;
+    visitGetExpr(expr: GetExpr): Value;
+    visitSetExpr(expr: SetExpr): Value;
+    visitThisExpr(expr: ThisExpr): Value;
+    visitSuperExpr(expr: SuperExpr): Value;
+    visitBinaryExpr(expr: BinaryExpr): Value;
+    visitUnaryExpr(expr: UnaryExpr): Value;
+    visitLogicalExpr(expr: LogicalExpr): Value;
+    visitAssignExpr(expr: AssignExpr): Value;
+    interpret(statements: Stmt[]): void;
+    resolve(expr: Expr, depth: number): void;
+    lookUpVariable(name: Token, expr: Expr): string | number | boolean | Callable | LoxInstance | null | undefined;
+    private stringify;
+    private checkNumberOperand;
+    private isEqual;
+    private isTruthy;
+    private evaulate;
+    private execute;
+    executeBlock(statements: Stmt[], environment: Environment): void;
+}
+export declare class RuntimeError extends Error {
+    token: Token;
+    constructor(token: Token, message: string);
+}
