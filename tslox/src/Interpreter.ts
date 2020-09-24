@@ -150,7 +150,7 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
     visitSetExpr(expr: SetExpr): Value {
         const object = this.evaulate(expr.object)
         if (!(object instanceof LoxInstance)) {
-            throw new RuntimeError(expr.name, "Only instances have properties.")
+            throw new RuntimeError(expr.name, "Only instances have fields.")
         }
 
         const value = this.evaulate(expr.value)
