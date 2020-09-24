@@ -99,7 +99,10 @@ export class Scanner {
             this.advance()
         }
         const text = this.source.substring(this.start, this.current)
-        let type = Scanner.keywords[text]
+        let type: TokenType | undefined = undefined
+        if (Scanner.keywords.hasOwnProperty(text)) {
+            type = Scanner.keywords[text]
+        }
         if (!type) {
             type = 'IDENTIFIER'
         }
