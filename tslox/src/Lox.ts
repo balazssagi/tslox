@@ -65,12 +65,22 @@ export class Lox {
     }
 
     private reportError = (token: Token, message: string) => {
-        this.errorReporter({
-            line: token.line,
-            message,
-            formattedMessage: `Error at '${token.lexeme}': ${message}`
-        })
-        this.hasError = true
+
+        if (token.type === 'EOF') {
+            this.errorReporter({
+                line: token.line,
+                message,
+                formattedMessage: `Error at end: ${message}`
+            })
+        }
+        else {
+            this.errorReporter({
+                line: token.line,
+                message,
+                formattedMessage: `Error at '${token.lexeme}': ${message}`
+            })
+            this.hasError = true
+        }
     }
 
     private reportScannerError = (line: number, message: string) => {
