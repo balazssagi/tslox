@@ -16,7 +16,7 @@ var Environment = /** @class */ (function () {
                 this.enclosing.assign(name, value);
                 return;
             }
-            throw new Interpreter_1.RuntimeError(name, "Undefined variable: " + name.lexeme + ".");
+            throw new Interpreter_1.RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
         }
         this.values.set(name.lexeme, value);
     };
@@ -28,7 +28,7 @@ var Environment = /** @class */ (function () {
         if (this.enclosing) {
             return this.enclosing.get(name);
         }
-        throw new Interpreter_1.RuntimeError(name, "Undefined variable: " + name.lexeme + ".");
+        throw new Interpreter_1.RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
     };
     Environment.prototype.getAt = function (distance, name) {
         return this.ancestor(distance).values.get(name);

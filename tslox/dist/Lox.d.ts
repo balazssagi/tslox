@@ -19,5 +19,6 @@ export declare class Lox {
     private reset;
     private reportRuntimeError;
     private reportError;
+    private reportScannerError;
 }
 export {};

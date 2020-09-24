@@ -7,7 +7,7 @@ import { TokenType } from "./TokenType"
 export class Parser {
     private current = 0
 
-    constructor(private tokens: Token[], private reportError: (line: number, message: string) => void) {}
+    constructor(private tokens: Token[], private reportError: (token: Token, message: string) => void) {}
 
     public parse() {
         const statements: Stmt[] = []
@@ -247,7 +247,7 @@ export class Parser {
                 return new SetExpr(expr.object, expr.name, value)
             }
 
-            this.error(equals, 'Invalid left-hand side in assignment.')
+            this.error(equals, 'Invalid assignment target.')
         }
 
         return expr
@@ -403,7 +403,7 @@ export class Parser {
     }
 
     private error(token: Token, message: string) {
-        this.reportError(token.line, message)
+        this.reportError(token, message)
         return new ParseError()
     }
 

@@ -29,7 +29,7 @@ var Resolver = /** @class */ (function () {
         if (stmt.superclass !== undefined) {
             this.currentClass = 'subclass';
             if (stmt.name.lexeme === stmt.superclass.name.lexeme) {
-                this.reportError(stmt.name.line, "A class cannot inherit from itself.");
+                this.reportError(stmt.name, "A class cannot inherit from itself.");
             }
             this.resolveExpression(stmt.superclass);
             this.beginScope();
@@ -53,7 +53,7 @@ var Resolver = /** @class */ (function () {
     };
     Resolver.prototype.visitVariableExpr = function (expr) {
         if (this.scopes.length !== 0 && this.scopes[this.scopes.length - 1].get(expr.name.lexeme) === false) {
-            this.reportError(expr.name.line, "Cannot read local variable in its own initializer.");
+            this.reportError(expr.name, "Cannot read local variable in its own initializer.");
         }
         this.resolveLocal(expr, expr.name);
     };
@@ -81,11 +81,11 @@ var Resolver = /** @class */ (function () {
     };
     Resolver.prototype.visitReturnStmt = function (stmt) {
         if (this.currentFunction === 'none') {
-            this.reportError(stmt.keyword.line, "Cannot return from top-level code.");
+            this.reportError(stmt.keyword, "Cannot return from top-level code.");
         }
         if (stmt.value !== undefined) {
             if (this.currentFunction === 'initializer') {
-                this.reportError(stmt.keyword.line, "Cannot return a value from an initializer.");
+                this.reportError(stmt.keyword, "Cannot return a value from an initializer.");
             }
             this.resolveExpression(stmt.value);
         }
@@ -114,16 +114,16 @@ var Resolver = /** @class */ (function () {
     };
     Resolver.prototype.visitThisExpr = function (expr) {
         if (this.currentClass === 'none') {
-            this.reportError(expr.keyword.line, "Cannot use 'this' outside of a class.");
+            this.reportError(expr.keyword, "Cannot use 'this' outside of a class.");
         }
         this.resolveLocal(expr, expr.keyword);
     };
     Resolver.prototype.visitSuperExpr = function (expr) {
         if (this.currentClass == "none") {
-            this.reportError(expr.keyword.line, "Cannot use 'super' outside of a class.");
+            this.reportError(expr.keyword, "Cannot use 'super' outside of a class.");
         }
         else if (this.currentClass != "subclass") {
-            this.reportError(expr.keyword.line, "Cannot use 'super' in a class with no superclass.");
+            this.reportError(expr.keyword, "Cannot use 'super' in a class with no superclass.");
         }
         this.resolveLocal(expr, expr.keyword);
     };
@@ -164,7 +164,7 @@ var Resolver = /** @class */ (function () {
         }
         var scope = this.scopes[this.scopes.length - 1];
         if (scope.has(name.lexeme)) {
-            this.reportError(name.line, "Variable with this name already declared in this scope.");
+            this.reportError(name, "Variable with this name already declared in this scope.");
         }
         scope.set(name.lexeme, false);
     };

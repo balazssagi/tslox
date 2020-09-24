@@ -18,14 +18,22 @@ var Lox = /** @class */ (function () {
             _this.errorReporter({
                 line: error.token.line,
                 message: error.message,
-                formattedMessage: "[line " + error.token.line + "] Runtime Error: " + error.message
+                formattedMessage: "" + error.message
             });
         };
-        this.reportError = function (line, message) {
+        this.reportError = function (token, message) {
+            _this.errorReporter({
+                line: token.line,
+                message: message,
+                formattedMessage: "Error at '" + token.lexeme + "': " + message
+            });
+            _this.hasError = true;
+        };
+        this.reportScannerError = function (line, message) {
             _this.errorReporter({
                 line: line,
                 message: message,
-                formattedMessage: "[line " + line + "] Error: " + message
+                formattedMessage: "Error at '': " + message
             });
             _this.hasError = true;
         };
@@ -35,7 +43,7 @@ var Lox = /** @class */ (function () {
     }
     Lox.prototype.parse = function (source) {
         this.reset();
-        var scanner = new Scanner_1.Scanner(source, this.reportError);
+        var scanner = new Scanner_1.Scanner(source, this.reportScannerError);
         var tokens = scanner.scanTokens();
         var parser = new Parser_1.Parser(tokens, this.reportError);
         var statements = parser.parse();

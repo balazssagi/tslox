@@ -208,7 +208,7 @@ var Parser = /** @class */ (function () {
             else if (expr instanceof Expr_1.GetExpr) {
                 return new Expr_1.SetExpr(expr.object, expr.name, value);
             }
-            this.error(equals, 'Invalid left-hand side in assignment.');
+            this.error(equals, 'Invalid assignment target.');
         }
         return expr;
     };
@@ -333,7 +333,7 @@ var Parser = /** @class */ (function () {
         return new Expr_1.CallExpr(callee, token, args);
     };
     Parser.prototype.error = function (token, message) {
-        this.reportError(token.line, message);
+        this.reportError(token, message);
         return new ParseError();
     };
     Parser.prototype.consume = function (type, message) {

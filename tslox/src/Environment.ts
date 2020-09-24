@@ -16,7 +16,7 @@ export class Environment {
                 this.enclosing.assign(name, value)
                 return
             }
-            throw new RuntimeError(name, `Undefined variable: ${name.lexeme}.`)
+            throw new RuntimeError(name, `Undefined variable '${name.lexeme}'.`)
         }
         this.values.set(name.lexeme, value)
     }
@@ -30,7 +30,7 @@ export class Environment {
         if (this.enclosing) {
             return this.enclosing.get(name)
         }
-        throw new RuntimeError(name, `Undefined variable: ${name.lexeme}.`)
+        throw new RuntimeError(name, `Undefined variable '${name.lexeme}'.`)
     }
 
     public getAt(distance: number, name: string) {

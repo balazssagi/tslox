@@ -4,7 +4,7 @@ export declare class Parser {
     private tokens;
     private reportError;
     private current;
-    constructor(tokens: Token[], reportError: (line: number, message: string) => void);
+    constructor(tokens: Token[], reportError: (token: Token, message: string) => void);
     parse(): Stmt[];
     private declaration;
     private function;

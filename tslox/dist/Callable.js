@@ -63,7 +63,7 @@ var LoxFunction = /** @class */ (function (_super) {
         return new LoxFunction(this.declaration, envivornment, this.isInitiazlier);
     };
     LoxFunction.prototype.toString = function () {
-        return "fn <" + this.declaration.name.lexeme + ">";
+        return "<fn " + this.declaration.name.lexeme + ">";
     };
     return LoxFunction;
 }(Callable));

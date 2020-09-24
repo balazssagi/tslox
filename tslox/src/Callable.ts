@@ -51,7 +51,7 @@ export class LoxFunction extends Callable {
     }
 
     toString() {
-        return `fn <${this.declaration.name.lexeme}>`
+        return `<fn ${this.declaration.name.lexeme}>`
     }
 }
 

@@ -3,6 +3,7 @@ import { Parser } from "./Parser"
 import { Interpreter, RuntimeError } from "./Interpreter"
 import { Resolver } from "./Resolver"
 import { Stmt } from "./Stmt"
+import { Token } from "./Token"
 
 type ErrorReporter = (input: {line: number, message: string, formattedMessage: string}) => void
 type Options = {stdOut?: (message: string) => void, errorReporter?: ErrorReporter}
@@ -26,7 +27,7 @@ export class Lox {
     public parse(source: string) {
         this.reset()
 
-        const scanner = new Scanner(source, this.reportError)
+        const scanner = new Scanner(source, this.reportScannerError)
         const tokens = scanner.scanTokens()
         const parser = new Parser(tokens, this.reportError)
         const statements = parser.parse()
@@ -59,15 +60,24 @@ export class Lox {
         this.errorReporter({
             line: error.token.line,
             message: error.message,
-            formattedMessage: `[line ${error.token.line}] Runtime Error: ${error.message}`
+            formattedMessage: `${error.message}`
         })
     }
 
-    private reportError = (line: number, message: string) => {
+    private reportError = (token: Token, message: string) => {
         this.errorReporter({
-            line,
+            line: token.line,
             message,
-            formattedMessage: `[line ${line}] Error: ${message}`
+            formattedMessage: `Error at '${token.lexeme}': ${message}`
+        })
+        this.hasError = true
+    }
+
+    private reportScannerError = (line: number, message: string) => {
+        this.errorReporter({
+            line: line,
+            message,
+            formattedMessage: `Error at '': ${message}`
         })
         this.hasError = true
     }

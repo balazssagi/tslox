@@ -1,13 +1,14 @@
 import { ExprVisitor, VariableExpr, AssignExpr, BinaryExpr, CallExpr, GroupingExpr, LiteralExpr, UnaryExpr, LogicalExpr, GetExpr, SetExpr, ThisExpr, SuperExpr } from "./Expr";
 import { Interpreter } from "./Interpreter";
 import { BlockStmt, FunctionStmt, Stmt, StmtVisitor, VarStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt } from "./Stmt";
+import { Token } from "./Token";
 export declare class Resolver implements StmtVisitor<void>, ExprVisitor<void> {
     private interpreter;
     private reportError;
     private scopes;
     private currentFunction;
     private currentClass;
-    constructor(interpreter: Interpreter, reportError: (line: number, message: string) => void);
+    constructor(interpreter: Interpreter, reportError: (token: Token, message: string) => void);
     visitBlockStmt(stmt: BlockStmt): void;
     visitVarStmt(stmt: VarStmt): void;
     visitClassStmt(stmt: ClassStmt): void;
