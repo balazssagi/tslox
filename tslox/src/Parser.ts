@@ -158,7 +158,7 @@ export class Parser {
         }
 
         let condition: Expr | undefined
-        if (!this.match('SEMICOLON')) {
+        if (!this.check('SEMICOLON')) {
             condition = this.expression()
         }
         else {

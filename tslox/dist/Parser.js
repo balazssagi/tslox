@@ -141,7 +141,7 @@ var Parser = /** @class */ (function () {
             initializer = this.expressionStatement();
         }
         var condition;
-        if (!this.match('SEMICOLON')) {
+        if (!this.check('SEMICOLON')) {
             condition = this.expression();
         }
         else {
