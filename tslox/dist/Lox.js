@@ -33,7 +33,7 @@ var Lox = /** @class */ (function () {
             _this.errorReporter({
                 line: line,
                 message: message,
-                formattedMessage: "Error at '': " + message
+                formattedMessage: "Error: " + message
             });
             _this.hasError = true;
         };

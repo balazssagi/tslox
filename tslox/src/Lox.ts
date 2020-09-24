@@ -77,7 +77,7 @@ export class Lox {
         this.errorReporter({
             line: line,
             message,
-            formattedMessage: `Error at '': ${message}`
+            formattedMessage: `Error: ${message}`
         })
         this.hasError = true
     }
