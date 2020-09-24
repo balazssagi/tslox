@@ -238,7 +238,7 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         const right = this.evaulate(expr.right)
         switch (expr.operator.type) {
             case 'MINUS':
-                this.checkNumberOperand(expr.operator, right)
+                this.checkNumberOperand(expr.operator, right, true)
                 return -right
             case 'BANG':
                 return !this.isTruthy(right)
@@ -310,11 +310,11 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         return value.toString()
     }
 
-    private checkNumberOperand(operator: Token, operand: Value): asserts operand is number {
+    private checkNumberOperand(operator: Token, operand: Value, unary = false): asserts operand is number {
         if (typeof operand === 'number') {
             return
         }
-        throw new RuntimeError(operator, 'Operand must be a number.')
+        throw new RuntimeError(operator, unary ? 'Operand must be a number.' : 'Operands must be numbers.')
     }
 
     private isEqual(left: Value, right: Value) {
