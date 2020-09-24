@@ -12,5 +12,8 @@
   "scripts": {
     "watch": "tsc --watch",
     "start": "node dist/index"
+  },
+  "devDependencies": {
+    "jest": "^26.4.2"
   }
 }
