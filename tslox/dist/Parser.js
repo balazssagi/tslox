@@ -200,7 +200,7 @@ var Parser = /** @class */ (function () {
         var expr = this.or();
         if (this.match('EQUAL')) {
             var equals = this.previous();
-            var value = this.or();
+            var value = this.assignment();
             if (expr instanceof Expr_1.VariableExpr) {
                 var name_1 = expr.name;
                 return new Expr_1.AssignExpr(name_1, value);

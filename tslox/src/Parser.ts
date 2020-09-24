@@ -237,7 +237,7 @@ export class Parser {
 
         if (this.match('EQUAL')) {
             const equals = this.previous()
-            const value = this.or()
+            const value = this.assignment()
 
             if (expr instanceof VariableExpr) {
                const name = expr.name
