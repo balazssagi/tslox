@@ -219,7 +219,7 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
             case 'LESS':
                 this.checkNumberOperand(expr.operator, left)
                 this.checkNumberOperand(expr.operator, right)
-                return left <= right
+                return left < right
             case 'LESS_EQUAL':
                 this.checkNumberOperand(expr.operator, left)
                 this.checkNumberOperand(expr.operator, right)
