@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import MonacoEditor from "react-monaco-editor";
-
+import type MonacoEditorTypes from "monaco-editor/esm/vs/editor/editor.api";
+ 
 interface Props {
     value: string;
 	onChange: (value: string) => void;
@@ -8,11 +9,9 @@ interface Props {
 	markers: {line: number, message: string}[]
 }
 
-type MonacoRef = typeof import("c:/Users/sagi.balazs/sites/tslox/playground/node_modules/monaco-editor/esm/vs/editor/editor.api")
-
 export const Editor: React.FC<Props> = ({ value, onChange, run, markers }) => {
 	const ref = useRef<MonacoEditor>()
-	const monacoRef = useRef<MonacoRef>()
+	const monacoRef = useRef<typeof MonacoEditorTypes>()
 
 
 	useEffect(() => {
