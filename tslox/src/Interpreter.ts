@@ -303,6 +303,9 @@ export class Interpreter implements ExprVisitor<Value>, StmtVisitor<void> {
         if (value === null) {
             return 'nil'
         }
+        if (Object.is(value, -0)) {
+            return '-0'
+        }
 
         return value.toString()
     }
