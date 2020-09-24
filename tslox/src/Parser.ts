@@ -390,7 +390,7 @@ export class Parser {
         const args: Expr[] = []
         if (!this.check('RIGHT_PAREN')) {
             do {
-                if (arguments.length >= 255) {
+                if (args.length >= 255) {
                     this.error(this.peek(), "Cannot have more than 255 arguments.");
                 }
                 args.push(this.expression())
