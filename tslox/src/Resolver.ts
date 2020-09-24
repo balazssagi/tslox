@@ -224,7 +224,7 @@ export class Resolver implements StmtVisitor<void>, ExprVisitor<void> {
     }
 
     private resolveLocal(expr: Expr, name: Token) {
-        for (let i = 0; i < this.scopes.length; i++) {
+        for (let i = this.scopes.length - 1; i >= 0; i--) {
             const scope = this.scopes[i]
             if (scope.has(name.lexeme)) {
                 this.interpreter.resolve(expr, this.scopes.length - 1 - i)
