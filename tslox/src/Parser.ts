@@ -254,26 +254,26 @@ export class Parser {
     }
 
     private or(): Expr {
-        const expr = this.and()
+        let expr = this.and()
 
         while(this.match('OR')) {
             const operator = this.previous()
             const right = this.and()
-            return new LogicalExpr(expr, operator, right)
+            expr = new LogicalExpr(expr, operator, right)
         }
 
         return expr
     }
 
     private and(): Expr {
-        const expr = this.equality()
-
+        let expr = this.equality()
+        
         while(this.match('AND')) {
             const operator = this.previous()
             const right = this.equality()
-            return new LogicalExpr(expr, operator, right)
+            expr = new LogicalExpr(expr, operator, right)
         }
-
+        
         return expr
     }
 
