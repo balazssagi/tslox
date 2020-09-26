@@ -12,7 +12,7 @@ const defaultErrorReporter: ErrorReporter = ({formattedMessage}) => {
     console.error(formattedMessage)
 }
 
-export class Lox {
+export class LoxRunner {
     private hasError = false
     private stdOut
     private errorReporter: ErrorReporter
@@ -44,10 +44,9 @@ export class Lox {
         }
 
         return statements
-        
     }
 
-    public run(statements: Stmt[]) {
+    public interpret(statements: Stmt[]) {
         this.interpreter.interpret(statements)
     }
 
@@ -65,6 +64,7 @@ export class Lox {
     }
 
     private reportError = (token: Token, message: string) => {
+        this.hasError = true;
 
         if (token.type === 'EOF') {
             this.errorReporter({
@@ -79,16 +79,16 @@ export class Lox {
                 message,
                 formattedMessage: `Error at '${token.lexeme}': ${message}`
             })
-            this.hasError = true
         }
     }
 
     private reportScannerError = (line: number, message: string) => {
+        this.hasError = true
+
         this.errorReporter({
             line: line,
             message,
             formattedMessage: `Error: ${message}`
         })
-        this.hasError = true
     }
 }

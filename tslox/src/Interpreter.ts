@@ -1,6 +1,5 @@
 import { Environment } from "./Environment";
 import { AssignExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, SuperExpr, ThisExpr, UnaryExpr, VariableExpr } from "./Expr";
-import { Lox } from "./Lox";
 import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "./Stmt";
 import { Token } from "./Token";
 import { Callable, LoxFunction, LoxClass } from './Callable'

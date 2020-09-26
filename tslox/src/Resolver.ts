@@ -1,6 +1,5 @@
 import { ExprVisitor, Expr, VariableExpr, AssignExpr, BinaryExpr, CallExpr, GroupingExpr, LiteralExpr, UnaryExpr, LogicalExpr, GetExpr, SetExpr, ThisExpr, SuperExpr } from "./Expr";
 import { Interpreter } from "./Interpreter";
-import { Lox } from "./Lox";
 import { BlockStmt, FunctionStmt, Stmt, StmtVisitor, VarStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt } from "./Stmt";
 import { Token } from "./Token";
 

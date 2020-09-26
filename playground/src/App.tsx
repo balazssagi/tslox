@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './App.css';
-import { Lox } from 'tslox';
+import { LoxRunner, Stmt } from 'tslox';
 import { Editor } from './components/Editor';
 import { Box, Button, Stack, Text } from '@chakra-ui/core';
 import { useDebouncedCallback } from 'use-debounce';
@@ -24,10 +24,9 @@ function App() {
     const [markers, setMarkers] = useState<{ line: number; message: string }[]>(
         []
     );
-    const [, setIsValid] = useState(false);
-    const scrollRef = useRef<HTMLPreElement>();
-    const lox = useRef(
-        new Lox({
+    const [statements, setStatements] = useState<null | Stmt[]>(null)
+    const loxRunner = useRef(
+        new LoxRunner({
             stdOut: (message) => {
                 setOutput((o) => [...o, { type: 'stdOut', message }]);
             },
@@ -40,24 +39,27 @@ function App() {
             },
         })
     );
+    const scrollRef = useRef<HTMLPreElement>();
 
-    const debounced = useDebouncedCallback(
+    const parse = useDebouncedCallback(
         () => {
-            lox.current.parse(source)
+            setOutput([])
+            const statements = loxRunner.current.parse(source)
+            setStatements(statements)
         },
-        1000,
+        50,
     );
 
     useEffect(() => {
+        setStatements(null)
         setMarkers([]);
         window.history.replaceState(
             null,
             '',
             window.location.pathname + '?code=' + btoa(source)
         );
-        debounced.callback()
-        // setIsValid(!!statements);
-    }, [source, debounced]);
+        parse.callback()
+    }, [source, parse]);
     
 
     useEffect(() => {
@@ -67,12 +69,10 @@ function App() {
     }, [output]);
 
     const run = useCallback(() => {
-        setOutput([]);
-        const statements = lox.current.parse(source);
         if (statements) {
-            lox.current.run(statements);
+            loxRunner.current.interpret(statements);
         }
-    }, [source]);
+    }, [statements]);
 
     return (
         <Box
@@ -95,7 +95,7 @@ function App() {
                     <Text fontSize={16} fontFamily='monospace' color='gray.500'>
                         <strong>Lox </strong>Playground
                     </Text>
-                    <Button size='sm' variantColor='green' onClick={run}>
+                    <Button isDisabled={statements === null} size='sm' variantColor='green' onClick={run}>
                         Run (Ctrl + Enter)
                     </Button>
                 </Stack>
