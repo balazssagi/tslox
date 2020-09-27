@@ -1,2 +1,2 @@
-export { LoxRunner } from './LoxRunner' 
+export { LoxRunner, TokenPosition } from './LoxRunner' 
 export { Stmt } from './Stmt' 

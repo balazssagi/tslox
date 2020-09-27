@@ -1,4 +1,4 @@
-const { Lox } = require('./dist')
+const { LoxRunner } = require('./dist')
 const fs = require('fs')
 const path = require('path')
 
@@ -17,13 +17,16 @@ files.forEach((file) => {
 
 function getExpectedOutput(source) {
     const lines = source.split('\n');
-    const EXPECTED_OUTPUT_REGEX = /expect: ?(.*)/;
-    const EXPECTED_ERROR_REGEX = /Error ?(.*)/;
-    const EXPECTED_RUNTIME_ERROR_REGEX = /expect runtime error: ?(.*)/;
+    const EXPECTED_OUTPUT_REGEX = /\/\/ expect: ?(.*)/;
+    const EXPECTED_ERROR_REGEX = /\/\/ Error ?(.*)/;
+    const EXPECTED_RUNTIME_ERROR_REGEX = /\/\/ expect runtime error: ?(.*)/;
+    const STACK_TRACE_REGEX = /\/\/ \[line (.*)\] ?(.*)/;
 
     const expectedOutput = [];
 
-    for (let line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+
         EXPECTED_OUTPUT_REGEX.lastIndex = 0;
 
         let match = line.match(EXPECTED_OUTPUT_REGEX);
@@ -34,13 +37,19 @@ function getExpectedOutput(source) {
 
         match = line.match(EXPECTED_ERROR_REGEX);
         if (match) {
-            expectedOutput.push(match[0]);
+            expectedOutput.push(`[Line ${i + 1}] ${match[0].replace('// ', '')}`);
             continue;
         }
 
         match = line.match(EXPECTED_RUNTIME_ERROR_REGEX);
         if (match) {
             expectedOutput.push(match[1]);
+            continue;
+        }
+
+        match = line.match(STACK_TRACE_REGEX);
+        if (match) {
+            expectedOutput.push(`[Line ${parseInt(match[1])}] ${match[2]}`);
             continue;
         }
     }
@@ -51,7 +60,7 @@ function getExpectedOutput(source) {
 function runLox(source) {
     const output = [];
     const expectedOutput = getExpectedOutput(source)
-    const lox = new Lox({
+    const lox = new LoxRunner({
         stdOut: (message) => {
             output.push(message);
         },
@@ -62,7 +71,7 @@ function runLox(source) {
 
     const statements = lox.parse(source)
     if (statements) {
-        lox.run(statements)
+        lox.interpret(statements)
     }
 
     return {output, expectedOutput}

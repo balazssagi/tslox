@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import MonacoEditor from "react-monaco-editor";
 import type MonacoEditorTypes from "monaco-editor/esm/vs/editor/editor.api";
+import { TokenPosition } from "tslox";
  
 interface Props {
     value: string;
 	onChange: (value: string) => void;
 	run: () => void
-	markers: {line: number, message: string}[]
+	markers: {position: TokenPosition, message: string}[]
 }
 
 export const Editor: React.FC<Props> = ({ value, onChange, run, markers }) => {
@@ -19,10 +20,10 @@ export const Editor: React.FC<Props> = ({ value, onChange, run, markers }) => {
 		if (model) {
 			monacoRef.current?.editor.setModelMarkers(model, '', markers.map(marker => 
 				({
-					startColumn: 1,
-					endColumn: Infinity,
-					startLineNumber: marker.line,
-					endLineNumber: marker.line,
+					startColumn: marker.position.start[1] + 1,
+					endColumn: marker.position.end[1] + 1,
+					startLineNumber: marker.position.start[0],
+					endLineNumber: marker.position.end[0],
 					message: marker.message,
 					severity: 8
 				})
@@ -78,7 +79,7 @@ export const Editor: React.FC<Props> = ({ value, onChange, run, markers }) => {
 					],
 				  
 					// we include these common regular expressions
-					symbols:  /[=><!~?:&|+\-*\/\^%]+/,
+					symbols:  /[=><!~?:&|+\-*/^%]+/,
 				  
 				  
 					// The main tokenizer for our languages
@@ -94,7 +95,7 @@ export const Editor: React.FC<Props> = ({ value, onChange, run, markers }) => {
 				  
 				  
 						// numbers
-						[/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+						[/\d*\.\d+([eE][-+]?\d+)?/, 'number.float'],
 						[/\d+/, 'number'],
 				  
 
@@ -107,7 +108,7 @@ export const Editor: React.FC<Props> = ({ value, onChange, run, markers }) => {
 					  ],
 				  
 					  comment: [
-						[/[^\/*]+/, 'comment' ],
+						[/[^/*]+/, 'comment' ],
 					  ],
 				  
 					  string: [

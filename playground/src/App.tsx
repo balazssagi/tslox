@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './App.css';
-import { LoxRunner, Stmt } from 'tslox';
+import { LoxRunner, Stmt, TokenPosition } from 'tslox';
 import { Editor } from './components/Editor';
 import { Box, Button, Stack, Text } from '@chakra-ui/core';
 import { useDebouncedCallback } from 'use-debounce';
@@ -21,7 +21,7 @@ function getInitialCode() {
 function App() {
     const [source, setSource] = useState(getInitialCode);
     const [output, setOutput] = useState<Output[]>([]);
-    const [markers, setMarkers] = useState<{ line: number; message: string }[]>(
+    const [markers, setMarkers] = useState<{ position: TokenPosition; message: string }[]>(
         []
     );
     const [statements, setStatements] = useState<null | Stmt[]>(null)
@@ -30,12 +30,12 @@ function App() {
             stdOut: (message) => {
                 setOutput((o) => [...o, { type: 'stdOut', message }]);
             },
-            errorReporter: ({ formattedMessage, line, message }) => {
+            errorReporter: ({ formattedMessage, position, message }) => {
                 setOutput((o) => [
                     ...o,
                     { type: 'stdErr', message: formattedMessage },
                 ]);
-                setMarkers((markers) => [...markers, { line, message }]);
+                setMarkers((markers) => [...markers, { position, message }]);
             },
         })
     );

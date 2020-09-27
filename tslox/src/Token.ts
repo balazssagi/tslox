@@ -1,19 +1,16 @@
 import { TokenType } from "./TokenType";
 
-export class Token {
-    type
-    lexeme
-    literal
-    line
+export type TokenRange = [start: number, end: number]
 
-    constructor(type: TokenType, lexeme: string, literal: any, line: number) {
-        this.type = type
-        this.lexeme = lexeme
-        this.literal = literal
-        this.line = line
-    }
+export class Token {
+    constructor(
+        public type: TokenType,
+        public lexeme: string,
+        public literal: any,
+        public range: TokenRange,
+    ) {}
 
     toString() {
-        return `${this.type} ${this.lexeme}, ${this.literal}`
+        return `${this.type} ${this.lexeme}, ${this.literal}`;
     }
 }

@@ -1,4 +1,4 @@
-import { Token } from "./Token"
+import { Token, TokenRange } from "./Token"
 import { TokenType } from "./TokenType"
 
 export class Scanner {
@@ -8,7 +8,7 @@ export class Scanner {
     private current = 0
     private line = 1
 
-    constructor(source: string, private reportError: (line: number, message: string) => void) {
+    constructor(source: string, private reportError: (range: TokenRange, message: string) => void) {
         this.source = source
     }
 
@@ -77,7 +77,7 @@ export class Scanner {
                     this.identifier()
                 }
                 else {
-                    this.reportError(this.line, 'Unexpected character.')
+                    this.reportError([this.start, this.current], 'Unexpected character.')
                 }
                 break;
         }
@@ -137,7 +137,7 @@ export class Scanner {
         }
 
         if (this.isAtEnd()) {
-            this.reportError(this.line, 'Unterminated string.')
+            this.reportError([this.start, this.current], 'Unterminated string.')
             return
         }
 
@@ -172,7 +172,7 @@ export class Scanner {
 
     private addToken(token: TokenType, literal?: any) {
         const text = this.source.substring(this.start, this.current)
-        this.tokens.push(new Token(token, text, literal, this.line))
+        this.tokens.push(new Token(token, text, literal, [this.start, this.current]))
     }
 
     scanTokens() {
@@ -181,7 +181,7 @@ export class Scanner {
             this.scanToken()
         }
 
-        this.tokens.push(new Token('EOF', "", undefined, this.line))
+        this.tokens.push(new Token('EOF', "", undefined, [this.start, this.current]))
         return this.tokens
     }
 }

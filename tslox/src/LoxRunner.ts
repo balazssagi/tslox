@@ -3,10 +3,15 @@ import { Parser } from "./Parser"
 import { Interpreter, RuntimeError } from "./Interpreter"
 import { Resolver } from "./Resolver"
 import { Stmt } from "./Stmt"
-import { Token } from "./Token"
+import { Token, TokenRange } from "./Token"
 
-type ErrorReporter = (input: {line: number, message: string, formattedMessage: string}) => void
+type ErrorReporter = (input: {position: TokenPosition, message: string, formattedMessage: string}) => void
 type Options = {stdOut?: (message: string) => void, errorReporter?: ErrorReporter}
+
+export type TokenPosition = {
+    start: [line: number, column: number],
+    end: [line: number, column: number],
+}
 
 const defaultErrorReporter: ErrorReporter = ({formattedMessage}) => {
     console.error(formattedMessage)
@@ -17,6 +22,7 @@ export class LoxRunner {
     private stdOut
     private errorReporter: ErrorReporter
     private interpreter: Interpreter
+    private source: string | null = null
 
     constructor(options?: Options) {
         this.stdOut = options?.stdOut ?? console.log
@@ -26,6 +32,7 @@ export class LoxRunner {
     
     public parse(source: string) {
         this.reset()
+        this.source = source
 
         const scanner = new Scanner(source, this.reportScannerError)
         const tokens = scanner.scanTokens()
@@ -54,10 +61,31 @@ export class LoxRunner {
         this.interpreter = new Interpreter(this.stdOut, this.reportRuntimeError)
         this.hasError = false
     }
+
+    private tokenRangeToPosition(range: TokenRange) {
+        const position: TokenPosition = {
+            start: [1, 0],
+            end: [1, 0],
+        }
+
+        for (let i = 0; i < range[1]; i++) {
+            const key: keyof TokenPosition = i < range[0] ? 'start' : 'end' 
+            position[key][1] = i + 1;
+            if (this.source![i] === '\n') {
+                position[key][0]++
+                position[key][1] = 1
+            }
+        }
+
+        return position
+    }
     
     private reportRuntimeError = (error: RuntimeError) => {
+
+        const position = this.tokenRangeToPosition(error.token.range) 
+
         this.errorReporter({
-            line: error.token.line,
+            position,
             message: error.message,
             formattedMessage: `${error.message}`
         })
@@ -65,30 +93,34 @@ export class LoxRunner {
 
     private reportError = (token: Token, message: string) => {
         this.hasError = true;
+        
+        const position = this.tokenRangeToPosition(token.range) 
 
         if (token.type === 'EOF') {
             this.errorReporter({
-                line: token.line,
+                position,
                 message,
-                formattedMessage: `Error at end: ${message}`
+                formattedMessage: `[Line ${position.start[0]}] Error at end: ${message}`
             })
         }
         else {
             this.errorReporter({
-                line: token.line,
+                position,
                 message,
-                formattedMessage: `Error at '${token.lexeme}': ${message}`
+                formattedMessage: `[Line ${position.start[0]}] Error at '${token.lexeme}': ${message}`
             })
         }
     }
 
-    private reportScannerError = (line: number, message: string) => {
+    private reportScannerError = (range: TokenRange, message: string) => {
         this.hasError = true
 
+        const position = this.tokenRangeToPosition(range)
+
         this.errorReporter({
-            line: line,
+            position: position,
             message,
-            formattedMessage: `Error: ${message}`
+            formattedMessage: `[Line ${position.start[0]}] Error: ${message}`
         })
     }
 }
